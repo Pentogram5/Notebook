@@ -3,6 +3,7 @@ from SC_API_tcp import *
 
 # Инициализация клиентов
 init_clients()
+IR_G, IR_R, IR_B, ULTRASONIC = get_constants()
 
 # Начальные скорости для моторов
 left_speed = 0
@@ -38,11 +39,15 @@ def update_speeds():
     # Устанавливаем скорости моторов
     rb.set_speed_cms_left(left_speed)
     rb.set_speed_cms_right(right_speed)
+    
 
 # Основной цикл управления
 try:
     while True:
+        IR_G, IR_R, IR_B, ULTRASONIC = get_constants()
         update_speeds()
+        print(IR_R)
+        time.sleep(0.03)
 except KeyboardInterrupt:
     # Остановка моторов при завершении программы
     rb.set_speed_cms_left(0)

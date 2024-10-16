@@ -64,6 +64,10 @@ def init_clients():
     threading.Thread(target=receive_sensor_data, daemon=True).start()
     threading.Thread(target=send_motor_commands, daemon=True).start()
 
+def get_constants():
+    global IR_G, IR_R, IR_B, ULTRASONIC
+    return IR_G, IR_R, IR_B, ULTRASONIC
+    
 def receive_sensor_data():
     global IR_G, IR_R, IR_B, ULTRASONIC
     rate_limiter = ThreadRate(UPDATE_RATE)
@@ -78,6 +82,7 @@ def receive_sensor_data():
                 IR_R = ScInfrared.deserialize(response['sensors']['IR_R'])
                 IR_B = ScInfrared.deserialize(response['sensors']['IR_B'])
                 ULTRASONIC = ScUltrasonic.deserialize(response['sensors']['ULTRASONIC'])
+                # print('A',IR_B)
             else:
                 print("Failed to get sensor data:", response)
                 
