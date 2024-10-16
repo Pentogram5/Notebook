@@ -14,7 +14,7 @@ IR_G = None
 IR_R = None
 IR_B = None
 ULTRASONIC = None
-MOTOR_CONTROLLER = RobotDirection(ip=SERVER_IP)
+MOTOR_CONTROLLER = None
 
 class TimeStamper:
     def __init__(self):
@@ -26,7 +26,6 @@ class TimeStamper:
         return dt
     
 ts = TimeStamper()
-
 
 async def fetch(session, url):
     async with session.get(url) as response:
@@ -45,7 +44,6 @@ async def fetch_and_deserialize(url, class_type):
             if url.endswith('/get_IR_G'):
                 global IR_G
                 IR_G = obj
-                # print(IR_G, ts.timestamp())
             elif url.endswith('/get_IR_R'):
                 global IR_R
                 IR_R = obj
@@ -77,16 +75,19 @@ async def main():
     await asyncio.gather(*tasks)
 
 def start_callback_thread():
+    global MOTOR_CONTROLLER
+    loop = asyncio.new_event_loop()
+    MOTOR_CONTROLLER = RobotDirection(ip=SERVER_IP, loop=loop)
+    
     def run():
+        asyncio.set_event_loop(loop)
         while True:
-            asyncio.run(main())
-            time.sleep(0)
-            # time.sleep(5)  # Задержка между циклами, например, 5 секунд
+            loop.run_until_complete(main())
+            time.sleep(0)  # Задержка между циклами
 
     thread = threading.Thread(target=run)
     thread.daemon = True  # Позволяет завершить поток при завершении основного потока
     thread.start()
-
 
 if __name__ == "__main__":
     start_callback_thread()
@@ -94,10 +95,9 @@ if __name__ == "__main__":
     # Основной поток может выполнять другие задачи или просто ожидать завершения.
     try:
         while True:
-            time.sleep(0)  # Основной поток может делать что-то еще или просто ожидать.
-            ts.timestamp()
             MOTOR_CONTROLLER.set_speed_cms_left(100)
-            print(ts.timestamp())
-            # print(IR_G)
+            MOTOR_CONTROLLER.set_speed_cms_right(100)
+            print(f"Elapsed time: {ts.timestamp()} seconds")
+            time.sleep(0)  # Задержка для демонстрации
     except KeyboardInterrupt:
         print("Program terminated.")

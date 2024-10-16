@@ -15,9 +15,12 @@ class TimeStamper:
         return dt
 
 class RobotDirection:
-    def __init__(self, ip="http://localhost:8080"):
+    def __init__(self, ip="http://localhost:8080", loop=None):
         self.ip = ip
-        self.loop = asyncio.new_event_loop()
+        if loop:
+            self.loop = loop
+        else:
+            self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
         self.running = True
 
