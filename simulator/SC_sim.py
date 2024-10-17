@@ -260,6 +260,12 @@ def get_tank():
 def get_our_position_rotation():
     return tank.x, tank.y, (m.degrees(tank.angle)-90) % 360
 
+def perform_action_throw_to_basket():
+    ...
+
+def perform_action_capture():
+    ...
+
 # Основной игровой цикл
 def main():
     global tank
