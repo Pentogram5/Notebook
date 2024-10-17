@@ -213,4 +213,5 @@ def main_test_move_to_target():
         rb.set_speed_cms_right(0)
 
 if __name__=='__main__':
-    main_test_move_to_target()
+   main_test_move_to_target()
+  #main_test_wasd()
