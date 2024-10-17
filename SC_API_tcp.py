@@ -45,10 +45,6 @@ def init_clients():
     # Запускаем потоки для получения данных сенсоров и отправки команд моторам
     threading.Thread(target=receive_sensor_data, daemon=True).start()
     threading.Thread(target=send_motor_commands, daemon=True).start()
-
-def get_constants():
-    global IR_G, IR_R, IR_B, ULTRASONIC
-    return IR_G, IR_R, IR_B, ULTRASONIC
     
 def receive_sensor_data():
     global IR_G, IR_R, IR_B, ULTRASONIC
@@ -105,11 +101,24 @@ def send_action(action):
     except Exception as e:
         print(f"Failed to send action command: {action}. Error: {e}")
 
+# --- ФУНКЦИИ И КЛАССЫ ЧТО ДОСТУПНЫ ДЛЯ РАБОТЫ С НИМИ ---
 def perform_action_capture():
     send_action("perform_action_capture")
 
 def perform_action_throw_to_basket():
     send_action("perform_action_throw_to_basket")
+
+global rb
+
+def get_constants():
+    global IR_G, IR_R, IR_B, ULTRASONIC
+    return IR_G, IR_R, IR_B, ULTRASONIC
+
+def get_our_position_rotation():
+    x, y, angle = 0, 0, 0
+    return x, y, angle
+# -------------------------------------------------------------
+
 
 ts = TimeStamper()
 def main():
