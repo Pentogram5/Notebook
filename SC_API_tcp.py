@@ -4,6 +4,7 @@ import time
 from SC_TCPRequests import StableConnectionClient
 from SC_infrared import ScInfrared
 from SC_ultrasonic import ScUltrasonic
+from SC_utils import *
 
 SERVER_IP = '192.168.2.12'
 PORT_SENSOR = 8081
@@ -18,6 +19,7 @@ class RobotDirection:
     def __init__(self):
         self.left_cms = 0
         self.right_cms = 0
+        self.max_speed = 36
     
     def set_speed_cms_left(self, speed):
         self.left_cms = speed
@@ -32,26 +34,6 @@ rb = RobotDirection()
 sensor_client = None
 command_client = None
 action_client = None
-
-class TimeStamper:
-    def __init__(self):
-        self.old_t = time.time()
-
-    def timestamp(self):
-        dt = time.time() - self.old_t
-        self.old_t = time.time()
-        return dt
-
-class ThreadRate:
-    """Утилита для сна с фиксированной частотой."""
-    def __init__(self, freq=1):
-        self.freq = freq
-        self._period = 1 / self.freq
-        self.ts = TimeStamper()
-
-    def sleep(self):
-        sleep_time = max(self._period - self.ts.timestamp(), 0)
-        time.sleep(sleep_time)
 
 def init_clients():
     global sensor_client, command_client, action_client

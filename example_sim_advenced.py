@@ -19,25 +19,25 @@ def update_speeds():
     
     # Проверяем нажатие клавиш и обновляем скорости
     if keyboard.is_pressed('w'):  # Вперед
-        left_speed += 80
-        right_speed += 80
+        left_speed += 10
+        right_speed += 10
     if keyboard.is_pressed('s'):  # Назад
-        left_speed -= 80
-        right_speed -= 80
+        left_speed -= 10
+        right_speed -= 10
     if keyboard.is_pressed('a'):  # Влево
-        left_speed -= 60
-        right_speed += 60
+        left_speed -= 20
+        right_speed += 20
     if keyboard.is_pressed('d'):  # Вправо
-        left_speed += 60
-        right_speed -= 60
+        left_speed += 20
+        right_speed -= 20
     
     # print(left_speed, right_speed)
     
-    # if keyboard.is_pressed('q'):  # Вправо
-    #     perform_action_throw_to_basket()
+    if keyboard.is_pressed('q'):  # Вправо
+        perform_action_throw_to_basket()
     
-    # if keyboard.is_pressed('e'):  # Вправо
-    #     perform_action_capture()
+    if keyboard.is_pressed('e'):  # Вправо
+        perform_action_capture()
 
     # Устанавливаем скорости моторов
     rb.set_speed_cms_left(left_speed)

@@ -75,7 +75,7 @@ def draw_line(screen, p1, p2, off_x, off_y, s):
 
 class Tank:
     def __init__(self, x, y, width=0.3, height=0.4, max_speed=0.36, track_width=0.5,
-                 mu=1, p=0.2,
+                 mu=1, p=0, #p=0.2,
                  s=200,
                  off_x=0, off_y=0):
         self.x = x
@@ -266,18 +266,24 @@ def perform_action_throw_to_basket():
 def perform_action_capture():
     ...
 
+global s
+s = 150 # s = 150 # Коэффициент перевода метра в пиксели: px/m
+field_height = 5 # Размер полигона
+field_width  = 5
+field_offset_x = 0.5 # Смещение СК полигона относительно его угла
+field_offset_y = 0.5
+mu_borders = 0.5 # Условный коэффициент трения стенок 
+def get_click_position():
+    if pygame.mouse.get_pressed()[0]:
+        return add(mul(1/s, pygame.mouse.get_pos()), (-field_offset_x, -field_offset_y))
+    else:
+        return None
+
 # Основной игровой цикл
 def main():
     global tank
     global IR_G, IR_R, IR_B, ULTRASONIC
     pygame.init()
-    
-    s = 150 # Коэффициент перевода метра в пиксели: px/m
-    field_height = 5 # Размер полигона
-    field_width  = 5
-    field_offset_x = 0.5 # Смещение СК полигона относительно его угла
-    field_offset_y = 0.5
-    mu_borders = 0.5 # Условный коэффициент трения стенок 
     
     # Настройки окна игры
     screen_width = field_height*s
