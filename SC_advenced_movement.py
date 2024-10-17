@@ -1,4 +1,4 @@
-from SC_API_sim import *
+from SC_API_tcp import *
 import math as m
 from SC_utils import *
 
