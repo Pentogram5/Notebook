@@ -1,8 +1,16 @@
 from SC_utils import *
 
 class State:
+    states = {1: 'start',
+              2: 'chooseObject',
+              3: 'takeNearPrice',
+              4: 'takeFarPrice',
+              5: 'takeHighPrice',
+              6: 'throwToBasket',
+              7: 'goToBase'}
+    currentState = 1
     def __init__(self):
-        ...
+        self.currentState = 1
     def on_enter(self):
         ...
     def on_exit(self):
