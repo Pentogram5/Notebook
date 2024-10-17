@@ -143,9 +143,10 @@ if __name__ == "__main__":
     # Create the video object
     # Add port= if is necessary to use a different one
     # video = GSTCamera(config='udpsrc port=5600 ! application/x-rtp, payload=96 ! rtph265depay ! h265parse ! mppvideodec format="BGR" discard-corrupted-frames=true ! appsink emit-signals=true caps="video/x-raw,format=BGR" sync=false max-buffers=2 drop=true')
-    video = GSTCamera(
-        config='rtspsrc location=rtsp://Admin:rtf123@192.168.2.250/251:554/1/1 latency=0 ! decodebin ! appsink emit-signals=true caps="video/x-raw,format=BGR" sync=false max-buffers=2 drop=true'
-    )
+    # video = GSTCamera(
+    #     config='rtspsrc location=rtsp://Admin:rtf123@192.168.2.250/251:554/1/1 latency=0 ! decodebin ! appsink emit-signals=true caps="video/x-raw,format=BGR" sync=false max-buffers=2 drop=true'
+    # )
+    video = GSTCamera(config='udpsrc port=5600 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! appsink emit-signals=true caps="video/x-raw,format=BGR" sync=false max-buffers=2 drop=true')
 
 
     while True:

@@ -1,6 +1,6 @@
 import keyboard
-from SC_API_tcp import *
-# from SC_API_sim import *
+# from SC_API_tcp import *
+from SC_API_sim import *
 
 # Инициализация клиентов
 init_clients()
@@ -25,17 +25,19 @@ def update_speeds():
         left_speed -= 80
         right_speed -= 80
     if keyboard.is_pressed('a'):  # Влево
-        left_speed -= 20
-        right_speed += 20
+        left_speed -= 60
+        right_speed += 60
     if keyboard.is_pressed('d'):  # Вправо
-        left_speed += 20
-        right_speed -= 20
+        left_speed += 60
+        right_speed -= 60
     
-    if keyboard.is_pressed('q'):  # Вправо
-        perform_action_throw_to_basket()
+    # print(left_speed, right_speed)
     
-    if keyboard.is_pressed('e'):  # Вправо
-        perform_action_capture()
+    # if keyboard.is_pressed('q'):  # Вправо
+    #     perform_action_throw_to_basket()
+    
+    # if keyboard.is_pressed('e'):  # Вправо
+    #     perform_action_capture()
 
     # Устанавливаем скорости моторов
     rb.set_speed_cms_left(left_speed)
@@ -47,7 +49,8 @@ try:
     while True:
         IR_G, IR_R, IR_B, ULTRASONIC = get_constants()
         update_speeds()
-        print(IR_R)
+        # print(IR_R)
+        print(get_our_position_rotation())
         time.sleep(0.03)
 except KeyboardInterrupt:
     # Остановка моторов при завершении программы
