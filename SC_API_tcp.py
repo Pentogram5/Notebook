@@ -108,7 +108,7 @@ def perform_action_capture():
 def perform_action_throw_to_basket():
     send_action("perform_action_throw_to_basket")
 
-global rb
+# global rb
 
 def get_constants():
     global IR_G, IR_R, IR_B, ULTRASONIC
