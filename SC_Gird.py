@@ -180,7 +180,7 @@ class Graph:
             current_cost, current, previous_direction = heapq.heappop(open_set)
 
             if current == goal:
-                return self.reconstruct_path(came_from, current)
+                return self.reconstruct_path_to_aim(came_from, current)
 
             for neighbor in G.neighbors(current):
                 tentative_g_score = current_cost + G[current][neighbor]['weight']
@@ -220,7 +220,19 @@ class Graph:
             total_path.append(current)  # Добавляем её в путь
 
         return total_path[::-1]  # Возвращаем путь в прямом порядке (от начальной до целевой вершины)
+    
+    def reconstruct_path_to_aim(self, came_from, current):
 
+        total_path = [current]
+        while current in came_from:
+            current = came_from[current]  
+            total_path.append(current)  
+
+        total_path[::-1]
+
+        del total_path[0]
+        return total_path 
+    
     def visualize(self, path=None):
         """
         Визуализация графа с объектами в вершинах и опционально с кратчайшим путём.
@@ -408,3 +420,4 @@ print(f"Кратчайший путь: {path}")
 
 # Визуализируем граф с кратчайшим путём
 g.visualize(path)
+
