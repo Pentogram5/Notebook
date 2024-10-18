@@ -166,6 +166,9 @@ class RobotAdvencedMovement:
         self.w = 0
         self.R_max = R_max
         
+        self.eps_angles = 5
+        self.eps_rate = 5
+        
         self.filter = MEAN_STD()
         
         # Параметры регулятора
@@ -273,9 +276,8 @@ class RobotAdvencedMovement:
             # print(delta_angle)
             yaw_rate = delta_angle / self.tau
             yaw_rate = min_sgn(yaw_rate, self.max_angle_speed)
-            eps = 5
             R = 0
-            if abs(yaw_rate)>eps:
+            if (abs(yaw_rate)>self.eps_rate) and (abs(delta_angle) > self.eps_angles):
                 R_non_abs = self.filter.filter(v/yaw_rate, dt)
                 R = abs(R_non_abs)
             if R > self.R_max:
@@ -284,7 +286,7 @@ class RobotAdvencedMovement:
             #     v = 0
             
             w = yaw_rate
-            # print(R, v, w)
+            print(R, v, w, delta_angle)
             self.set_speeds(v, w)
             self.tr.sleep()
             
@@ -411,6 +413,6 @@ def main_test_input():
         rb.set_speed_cms_right(0)
 
 if __name__=='__main__':
-    #main_test_move_to_target()
+    main_test_move_to_target()
     # main_test_wasd()
-    main_test_input()
+    # main_test_input()
