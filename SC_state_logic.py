@@ -56,6 +56,8 @@ class ChooseObject(State):
             return get_remain_valuable_object_state()
         else:
             return State.CHOOSE_OBJECT
+def get_remain_valuable_object_state():
+    ...
 def nothing_remain_check():
     # Функция проверки того, что ни одного объекта не осталось на поле
     ...
