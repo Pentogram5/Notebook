@@ -12,8 +12,8 @@ PORT_COMMAND = 8082
 PORT_ACTION = 8083
 UPDATE_RATE = 30  # Частота в Гц
 
-global IR_G, IR_R, IR_B, ULTRASONIC
-IR_G, IR_R, IR_B, ULTRASONIC = ScInfrared(), ScInfrared(), ScInfrared(), ScUltrasonic()
+global ir_g, ir_r, ir_b, ultrasonic
+ir_g, ir_r, ir_b, ultrasonic = ScInfrared(), ScInfrared(), ScInfrared(), ScUltrasonic()
 
 class RobotDirection:
     def __init__(self):
@@ -47,11 +47,35 @@ def init_clients():
     threading.Thread(target=send_motor_commands, daemon=True).start()
 
 def get_constants():
-    global IR_G, IR_R, IR_B, ULTRASONIC
-    return IR_G, IR_R, IR_B, ULTRASONIC
+    global ir_g, ir_r, ir_b, ultrasonic
+    return ir_g, ir_r, ir_b, ultrasonic
+
+def get_ULTRASONIC():
+    return ultrasonic
+
+class _Sensors:
+    @property
+    def IR_G(self):
+        global ir_g, ir_r, ir_b, ultrasonic
+        return ir_g
+    @property
+    def IR_R(self):
+        global ir_g, ir_r, ir_b, ultrasonic
+        return ir_r
+    @property
+    def IR_B(self):
+        global ir_g, ir_r, ir_b, ultrasonic
+        return ir_b
+    @property
+    def ULTRASONIC(self):
+        global ir_g, ir_r, ir_b, ultrasonic
+        return ultrasonic
+
+Sensors = _Sensors()
+    
     
 def receive_sensor_data():
-    global IR_G, IR_R, IR_B, ULTRASONIC
+    global ir_g, ir_r, ir_b, ultrasonic
     rate_limiter = ThreadRate(UPDATE_RATE)
     
     while True:
@@ -60,11 +84,12 @@ def receive_sensor_data():
             # print(response)
             if response and response.get("response_code") == 200:
                 # Обновляем значения сенсоров
-                IR_G = ScInfrared.deserialize(response['sensors']['IR_G'])
-                IR_R = ScInfrared.deserialize(response['sensors']['IR_R'])
-                IR_B = ScInfrared.deserialize(response['sensors']['IR_B'])
-                ULTRASONIC = ScUltrasonic.deserialize(response['sensors']['ULTRASONIC'])
-                # print('A',IR_B)
+                # print(response['sensors']['ir_g'])
+                ir_g = ScInfrared.deserialize(response['sensors']['IR_G'])
+                ir_r = ScInfrared.deserialize(response['sensors']['IR_R'])
+                ir_b = ScInfrared.deserialize(response['sensors']['IR_B'])
+                ultrasonic = ScUltrasonic.deserialize(response['sensors']['ULTRASONIC'])
+                # print('A',ir_b)
             else:
                 print("Failed to get sensor data:", response)
                 
@@ -126,11 +151,11 @@ def main():
             # print('AAA')
             # send_action("perform_look_forward")   # Отправляем пример действия
             
-            # tss = IR_G.timestamp
+            # tss = ir_g.timestamp
             # # print(ts.timestamp(), tss-old_tss)
             # old_tss = tss
-            # print(IR_B)
-            # print(ULTRASONIC)
+            # print(ir_b)
+            # print(ultrasonic)
             a = input()
             if a=='1':
                 perform_action_capture()

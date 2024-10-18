@@ -1,4 +1,4 @@
-from SC_API_sim import *
+from SC_API_tcp import *
 import math as m
 from SC_utils import *
 
@@ -356,7 +356,8 @@ def main_test_wasd():
     # Основной цикл управления
     try:
         while True:
-            IR_G, IR_R, IR_B, ULTRASONIC = get_constants()
+            # IR_G, IR_R, IR_B, ULTRASONIC = get_constants()
+            print(Sensors.IR_G)
             update_speeds()
             # print(IR_R)
             # print(get_our_position_rotation())
@@ -413,6 +414,6 @@ def main_test_input():
         rb.set_speed_cms_right(0)
 
 if __name__=='__main__':
-    main_test_move_to_target()
-    # main_test_wasd()
+    # main_test_move_to_target()
+    main_test_wasd()
     # main_test_input()
