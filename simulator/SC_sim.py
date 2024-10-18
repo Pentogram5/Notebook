@@ -74,7 +74,7 @@ def draw_line(screen, p1, p2, off_x, off_y, s):
     pygame.draw.line(screen, (255, 0, 0), v1, v2, 2)
 
 class Tank:
-    def __init__(self, x, y, width=0.3, height=0.4, max_speed=0.36, track_width=0.5,
+    def __init__(self, x, y, width=0.25, height=0.29, max_speed=0.36, track_width=0.21,
                  mu=1, p=0, #p=0.2,
                  s=200,
                  off_x=0, off_y=0):

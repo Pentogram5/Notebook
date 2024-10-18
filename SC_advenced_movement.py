@@ -10,11 +10,153 @@ class RobotActions:
 class OnDoneActions:
     STOP = 0
     WAIT = 1
+    
+import numpy as np
+
+
+import numpy as np
+from collections import deque
+
+class Filter:
+    def cast(self, arr):
+        if not (type(arr) in (list, tuple)):
+            arr = (arr,)
+        assert all([type(a) in (int, float) for a in arr]), "Unsupported data type"
+        return arr
+
+class MEAN_STD(Filter):
+    def __init__(self, fifo_n=5, T=1.0):
+        self.fifo = deque()  # Используем deque для более эффективного удаления старых данных
+        self.fifo_n = fifo_n
+        self.T = T  # Параметр времени окна
+        self.last_time = None  # Время последней фильтрации
+
+    def filter(self, arr, dt):
+        # Casting
+        arr = self.cast(arr)
+        np_arr = np.array(arr)
+
+        # Устанавливаем текущее время
+        current_time = 0 if self.last_time is None else self.last_time + dt
+
+        # Добавляем новые данные в fifo с текущим временем
+        self.fifo.append((current_time, np_arr))
+
+        # Удаляем старые данные
+        while self.fifo and (current_time - self.fifo[0][0]) > self.T:
+            self.fifo.popleft()
+
+        # Проверяем количество элементов в fifo
+        if len(self.fifo) == 0:
+            return type(arr)(np_arr)  # Если fifo пустой, возвращаем исходные данные
+
+        # Преобразуем fifo в массив numpy для вычислений
+        fifo_values = np.array([value for _, value in self.fifo])
+
+        # Проверяем, есть ли данные для вычисления
+        if len(fifo_values) == 0:
+            return type(arr)(np_arr)  # Если нет данных, возвращаем исходные данные
+
+        # Создаем массив весов
+        weights = np.array([dt] * len(fifo_values))
+
+        # Проверка на ненулевую сумму весов
+        if np.sum(weights) == 0:
+            # print(np_arr)
+            return type(arr)(np_arr)[0]  # Если сумма весов равна нулю, возвращаем исходные данные
+
+        # Вычисляем среднее и стандартное отклонение с учетом dt
+        mean = np.average(fifo_values, axis=0, weights=weights)
+        std = np.sqrt(np.average((fifo_values - mean) ** 2, axis=0, weights=weights))
+
+        # Находим неподходящие значения
+        replace_mask = abs(np_arr - mean) > std
+
+        # Фильтруем данные
+        np_arr[replace_mask] = mean[replace_mask]
+
+        # Обновляем время последней фильтрации
+        self.last_time = current_time
+        # print(np_arr)
+        
+        return type(arr)(np_arr)[0]
+
+
+    def clear(self):
+        self.fifo.clear()
+
+
+# Robustness filter
+# class MEAN_STD(Filter):
+#     def __init__(self, fifo_n=5):
+#         self.fifo = []
+#         self.fifo_n = fifo_n
+
+#     def filter(self, arr):
+#         # Casting
+#         arr = self.cast(arr)
+#         np_arr = np.array(arr)
+#         self.fifo.append(arr)
+#         # Finding array parameters
+#         mean = np.mean(self.fifo, axis=0)
+#         std = np.std(self.fifo, axis=0)
+#         # Finding inappropriate values
+#         replace_mask = abs(np_arr - mean) > std
+#         # Filtering
+#         np_arr[replace_mask] = mean[replace_mask]
+#         # Append to array
+
+#         # Check for data trust
+#         if len(self.fifo) > self.fifo_n:
+#             # print(self.fifo,'DEL')
+#             del self.fifo[0]
+#             # We can trust the datas
+#             return type(arr)(np_arr)
+#         else:
+#             # We can't, return at least mean
+#             return type(arr)(mean)
+
+#     def clear(self):
+#         del self.fifo
+#         self.fifo = []
+
+def sgn(x):
+    """Return the sign of a float.
+    
+    Args:
+        x (float): The input number.
+
+    Returns:
+        int: -1 if x is negative, 1 if x is positive, 0 if x is zero.
+    """
+    if x > 0:
+        return 1
+    elif x < 0:
+        return -1
+    else:
+        return 0
+
+
+def min_sgn(a, min_val):
+    a_abs = abs(a)
+    a_sgn = sgn(a)
+    
+    a_abs = min(a_abs, min_val)
+    return a_abs * a_sgn
+
+def max_sgn(a, max_val):
+    a_abs = abs(a)
+    a_sgn = sgn(a)
+    
+    a_abs = max(a_abs, max_val)
+    return a_abs * a_sgn
+
 
 class RobotAdvencedMovement:
     def __init__(self, rb=rb,
-                 L=0.3, # Расстояние между центрами гусениц
+                 L=0.21, # Расстояние между центрами гусениц
                  R_of_success=0.15, # В пределах какого радиуса считаем, что мы достигли заданной точки
+                 R_max=0.3, # Максимальный радиус поворота
                  fps = 20
                  ):
         self.rb = rb
@@ -22,12 +164,19 @@ class RobotAdvencedMovement:
         self.R = R_of_success
         self.v = 0
         self.w = 0
+        self.R_max = R_max
+        
+        self.eps_angles = 5
+        self.eps_rate = 5
+        
+        self.filter = MEAN_STD()
         
         # Параметры регулятора
-        self.max_angle_speed = 20
+        self.max_angle_speed = 90
         self.max_speed = self.rb.max_speed
         self.tau = 0.1 # Rate tau
         self.tr = ThreadRate(fps) # Частота обновления регулятора
+        self.ts = TimeStamper()
         
         # Параметры логики
         self.current_action = RobotActions.IDLE
@@ -83,6 +232,8 @@ class RobotAdvencedMovement:
             rms = 0
         self.rb.set_speed_cms_left(lms)
         self.rb.set_speed_cms_right(rms)
+        
+        self.ts = TimeStamper()
     
     def move_to_point(self, p, v=None, on_done=OnDoneActions.STOP):
         if v==None:
@@ -112,7 +263,9 @@ class RobotAdvencedMovement:
     def _movement_to_point(self):
         # Обрабатываем движение к заданной точке
         x, y, angle = self.get_pos_rot()
+        dt = self.ts.timestamp()
         while self.current_action == RobotActions.MOVING_TO_POINT:
+            dt = self.ts.timestamp()
             # print(get_distance((x,y), self.current_point))
             x, y, angle = self.get_pos_rot()
             v = self.desired_speed
@@ -120,12 +273,20 @@ class RobotAdvencedMovement:
             
             # Поиск требуемового yaw rate
             delta_angle = get_shortest_angle_path(angle, desired_angle)
-            print(delta_angle)
+            # print(delta_angle)
             yaw_rate = delta_angle / self.tau
-            if abs(yaw_rate) > self.max_angle_speed:
+            yaw_rate = min_sgn(yaw_rate, self.max_angle_speed)
+            R = 0
+            if (abs(yaw_rate)>self.eps_rate) and (abs(delta_angle) > self.eps_angles):
+                R_non_abs = self.filter.filter(v/yaw_rate, dt)
+                R = abs(R_non_abs)
+            if R > self.R_max:
                 v = 0
+            # if abs(yaw_rate) > self.max_angle_speed:
+            #     v = 0
             
             w = yaw_rate
+            print(R, v, w, delta_angle)
             self.set_speeds(v, w)
             self.tr.sleep()
             
@@ -195,7 +356,8 @@ def main_test_wasd():
     # Основной цикл управления
     try:
         while True:
-            IR_G, IR_R, IR_B, ULTRASONIC = get_constants()
+            # IR_G, IR_R, IR_B, ULTRASONIC = get_constants()
+            print(Sensors.IR_G)
             update_speeds()
             # print(IR_R)
             # print(get_our_position_rotation())
@@ -252,6 +414,6 @@ def main_test_input():
         rb.set_speed_cms_right(0)
 
 if __name__=='__main__':
-    #main_test_move_to_target()
-    # main_test_wasd()
-    main_test_input()
+    # main_test_move_to_target()
+    main_test_wasd()
+    # main_test_input()
