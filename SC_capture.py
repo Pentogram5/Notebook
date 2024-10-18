@@ -2,7 +2,7 @@ from SC_advenced_movement import ram
 from SC_API_tcp import *
 
 from pid import PID
-pid = PID(0.01, 0, 0)
+pid = PID(0.00001, 0, 0)
 
 import cv2
 from ultralytics import YOLO
@@ -74,7 +74,7 @@ class Grabber:
         self.ram = ram
         self.pid = pid
         self.pid.setpoint = self.image_w // 2
-        self.pid.output_limits = (-60, 60)
+        self.pid.output_limits = (-10, 10)
         pid.tunings = (-1.0, -0.1, 0)
 
     def capture(self):
@@ -91,6 +91,6 @@ class Grabber:
 
 
 init_clients()
-# ram.set_speeds(0,0)
-G = Grabber(ram, pid)
-G.capture()
+ram.set_speeds(0,0)
+# G = Grabber(ram, pid)
+# G.capture()
