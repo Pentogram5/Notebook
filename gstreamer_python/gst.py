@@ -2,15 +2,16 @@ import os
 import threading
 import time
 import cv2
-from wincam import DXCamera  # Importing the new camera module
-from windowsing import *
+# from wincam import DXCamera  # Importing the new camera module
+import bettercam
+from .windowsing import *
 
 class GstCam:
     cam1 = 'rtsp://Admin:rtf123@192.168.2.250/251:554/1/1'
     cam2 = 'rtsp://Admin:rtf123@192.168.2.251/251:554/1/1'
     command = 'gst-launch-1.0 rtspsrc location={} latency=0 ! decodebin ! autovideosink'
 
-    def __init__(self, w=1333, h=889, fps=120, margin=(20,50,20,20)):
+    def __init__(self, w=1333, h=889, fps=60, margin=(20,50,20,20)):
         # l,t,r,b
         self.win_name = "Direct3D11 renderer"
         self.camera = None
@@ -65,7 +66,10 @@ class GstCam:
         y += self.margin[1]
         w -= self.margin[2]+self.margin[0]
         h -= self.margin[3]+self.margin[1]
-        self.camera = DXCamera(x, y, w, h, fps=self.fps)  # Create a new camera instance
+        # print(x, y, w, h)
+        self.camera = bettercam.create()
+        #, fps=self.fps
+        self.camera.start(region=(x, y, w, h), target_fps=self.fps)  # Create a new camera instance
         # Start capturing in the specified area
         # self.camera.start(region=region, target_fps=self.fps)
 
@@ -74,7 +78,14 @@ class GstCam:
             return None, None
         position_window(self.win_name, self.w, self.h)
         bring_window_to_front(self.win_name)
-        frame, timestamp = self.camera.get_bgr_frame()
+        while True:
+            try:
+                # frame = self.camera.get_latest_frame()
+                rgb = self.camera.get_latest_frame()  # Get the latest RGB frame
+                frame = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)  # Convert RGB to BGR
+                break
+            except Exception as ex:
+                print(ex)
         
         if frame is None:
             raise RuntimeError("Не удалось захватить изображение.")
