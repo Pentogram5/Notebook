@@ -42,7 +42,7 @@ class Graph:
         """
         node = object_data[0]
         name = object_data[1]
-        if 'basket' in name or 'button' in name:
+        if 'alien' in name :
             status = 'impassable'
         else:
             status = 'passable'
@@ -61,7 +61,7 @@ class Graph:
             'width': width,
             'center': (center_x, center_y)
         })
-        print(f"Объект '{name}' размера {length}x{width} с центром ({center_x}, {center_y}) добавлен в узел {node}.")
+        # print(f"Объект '{name}' размера {length}x{width} с центром ({center_x}, {center_y}) добавлен в узел {node}.")
 
     def set_node_properties(self, node, length, width, center_x, center_y):
         """
@@ -77,7 +77,7 @@ class Graph:
             'width': width,
             'center': (center_x, center_y)
         }
-        print(f"Размер {length}x{width} с центром ({center_x}, {center_y}) установлен для узла {node}.")
+        # print(f"Размер {length}x{width} с центром ({center_x}, {center_y}) установлен для узла {node}.")
 
     def get_node_properties(self, node):
         """
@@ -87,15 +87,33 @@ class Graph:
         """
         return self.node_properties.get(node, "Свойства не установлены")
 
-    def remove_edge(self, node1, node2):
+    def remove_edge(self, edges_to_remove):
         """
         Удаляет связь между двумя вершинами, если такая связь существует.
-        :param node1: Первая вершина.
-        :param node2: Вторая вершина.
+
         """
-        edge = frozenset([node1, node2])
-        self.edges = [e for e in self.edges if frozenset([e[0], e[1]]) != edge]
-        print(f"Связь между {node1} и {node2} удалена.")
+        for edge in edges_to_remove:
+            self.edges = [e for e in self.edges if frozenset([e[0], e[1]]) != frozenset(edge)]
+
+
+    def remove_edge_by_objects(self):
+            
+        for node, properties in self.node_properties.items():
+            if node in self.objects:
+                for objects in self.objects[node]:
+                    objects = self.objects[node]
+                    for obj in objects:
+                        obj_status = obj['status']
+                        if obj_status == 'impassable':
+                            edges_to_remove = [((node[0], node[1]), (node[0]+1, node[1])), 
+                                               ((node[0], node[1]), (node[0], node[1]+1)), 
+                                               ((node[0], node[1]), (node[0]-1, node[1])),
+                                               ((node[0], node[1]), (node[0], node[1]-1))]
+                            
+                            self.remove_edge(edges_to_remove)
+
+
+
 
     def find_shortest_path(self, start, goal):
         """
@@ -203,7 +221,6 @@ class Graph:
                 for objects in self.objects[node]:
                     objects = self.objects[node]
                     for obj in objects:
-                        print(obj)
                         obj_length = obj['length']
                         obj_width = obj['width']
                         obj_center_x, obj_center_y = obj['center']
@@ -273,19 +290,8 @@ rows = cols = 5
 # Создаём граф
 g = Graph(rows, cols)
 
-
-# Удаление нескольких связей
-edges_to_remove = [((1, 0), (1, 1)), ((0, 1), (1, 1)), 
-                   ((1, 3), (1, 4)),((1, 3), (0, 3)), 
-                   ((4, 3), (3, 3)),((3, 3), (3, 4)),
-                   ((4, 1), (3,1)),((3, 0), (3, 1)),
-                   ((2, 2), (1,2)),((2, 2), (3, 2)),
-                   ((2, 0), (2,1)),((2, 3), (2, 4)),]
-
-for edge in edges_to_remove:
-    g.remove_edge(edge[0], edge[1])
-
-
+start = (0, 0)
+goal = (4, 4)
 
 g.set_node_properties((0, 0), 95, 45, 22.5, 47.5)
 g.set_node_properties((0, 1), 95, 70, 80, 47.5)
@@ -331,6 +337,9 @@ basket2_position = [(4, 4), 'backet', 15, 10, 295, 190]
 button1_position = [(2, 2), 'button', 16, 20, 150, 8]
 button2_position = [(4, 4), 'button', 16, 20, 150, 385-8]
 
+out_robot_position = [start, 'our', 25, 29, 22.5, 47.5]
+alien_robot_position = [(1, 4), 'alien', 29, 25, 277.5, 125]
+
 g.add_object_to_node(сube1_position)
 g.add_object_to_node(сube1_position)
 
@@ -344,6 +353,23 @@ g.add_object_to_node(basket2_position)
 
 g.add_object_to_node(button1_position)
 g.add_object_to_node(button2_position)
+
+g.add_object_to_node(button1_position)
+g.add_object_to_node(button2_position)
+
+g.add_object_to_node(out_robot_position)
+g.add_object_to_node(alien_robot_position)
+
+edges_to_remove = [((1, 0), (1, 1)), ((0, 1), (1, 1)), 
+                   ((1, 3), (1, 4)),((1, 3), (0, 3)), 
+                   ((4, 3), (3, 3)),((3, 3), (3, 4)),
+                   ((4, 1), (3,1)),((3, 0), (3, 1)),
+                   ((2, 2), (1,2)),((2, 2), (3, 2)),
+                   ((2, 0), (2,1)),((2, 3), (2, 4)),]
+
+g.remove_edge(edges_to_remove)
+
+g.remove_edge_by_objects()
 
 
 # Пример поиска кратчайшего пути
