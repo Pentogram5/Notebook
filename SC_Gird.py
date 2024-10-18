@@ -29,12 +29,6 @@ class Graph:
                 if j < self.cols - 1:
                     self.edges.append(((i, j), (i, j + 1), 1))  # Связь с правым соседом, вес 1
                 
-                # # Добавляем диагональные связи с более высоким весом
-                # if i < self.rows - 1 and j < self.cols - 1:
-                #     self.edges.append(((i, j), (i + 1, j + 1), 2))  # Связь с нижним правым соседом, вес 2
-                # if i < self.rows - 1 and j > 0:
-                #     self.edges.append(((i, j), (i + 1, j - 1), 2))  # Связь с нижним левым соседом, вес 2
-
     def add_object_to_node(self, object_data):
         """
         Размещает объект в указанной вершине графа. 
@@ -61,7 +55,52 @@ class Graph:
             'width': width,
             'center': (center_x, center_y)
         })
-        # print(f"Объект '{name}' размера {length}x{width} с центром ({center_x}, {center_y}) добавлен в узел {node}.")
+
+    def update_object(self, obj):
+        """
+        Обновление объекта по имени.
+        """
+        node = obj[0]
+        name = obj[1]
+
+        if name != 'cube':
+            num = -1
+            for n in self.objects:
+                if node == n:
+                    for i in range(0, len(self.objects[n])):
+                        if name == self.objects[n][i]['name']:
+                            num = i
+            del self.objects[node][num]
+
+        self.add_object_to_node(obj)
+
+    def update_cubes(self, cube1, cube2):
+        """
+        Обновление кубов.
+        """
+        node1 = cube1[0]
+        name1 = cube1[1]
+        num1 = -1
+        for n in self.objects:
+            if node1 == n:
+                for i in range(0, len(self.objects[n])):
+                    if name1 == self.objects[n][i]['name']:
+                        num2 = i
+        del self.objects[node1][num1]
+
+        self.add_object_to_node(cube1)
+
+        node2 = cube1[0]
+        name2 = cube1[1]
+        num2 = -1
+        for n in self.objects:
+            if node2 == n:
+                for i in range(0, len(self.objects[n])):
+                    if name2 == self.objects[n][i]['name']:
+                        num2 = i
+        del self.objects[node1][num2]
+
+        self.add_object_to_node(cube2)
 
     def set_node_properties(self, node, length, width, center_x, center_y):
         """
@@ -95,10 +134,9 @@ class Graph:
         for edge in edges_to_remove:
             self.edges = [e for e in self.edges if frozenset([e[0], e[1]]) != frozenset(edge)]
 
-
     def remove_edge_by_objects(self):
             
-        for node, properties in self.node_properties.items():
+        for node in self.node_properties:
             if node in self.objects:
                 for objects in self.objects[node]:
                     objects = self.objects[node]
@@ -111,9 +149,6 @@ class Graph:
                                                ((node[0], node[1]), (node[0], node[1]-1))]
                             
                             self.remove_edge(edges_to_remove)
-
-
-
 
     def find_shortest_path(self, start, goal):
         """
@@ -235,7 +270,6 @@ class Graph:
                         # Подпись для объекта
                         plt.text(obj_center_x, obj_center_y+7, obj['name'], ha='center', va='center', fontsize=8, color='black')
 
-
         # Проверка наличия связей и выделение чёрных граней, где их нет
         for i in range(self.rows):
             for j in range(self.cols):
@@ -279,11 +313,6 @@ class Graph:
         plt.title(f"Rectangular Graph Visualization ({self.rows}x{self.cols})")
         plt.show()
 
-
-# Пример использования
-
-# Пример использования для графа 5x5, где для всех узлов заданы размеры и центры
-
 # Размеры графа
 rows = cols = 5
 
@@ -324,7 +353,7 @@ g.set_node_properties((4, 3), 95, 70, 220, 337.5)
 g.set_node_properties((4, 4), 95, 45, 277.5, 337.5)
 
 сube1_position = [(4, 4), 'cube', 5, 5, 280, 340]
-cube2_position = [(4, 4), 'cube', 5, 5, 280, 340]
+cube2_position = [(4, 0), 'cube', 5, 5, 22.5, 337.5]
 
 sphere_position = [(2, 2), 'sphere', 5, 5, 150, 190]
 
@@ -341,7 +370,7 @@ out_robot_position = [start, 'our', 25, 29, 22.5, 47.5]
 alien_robot_position = [(1, 4), 'alien', 29, 25, 277.5, 125]
 
 g.add_object_to_node(сube1_position)
-g.add_object_to_node(сube1_position)
+g.add_object_to_node(cube2_position)
 
 g.add_object_to_node(sphere_position)
 
@@ -371,7 +400,6 @@ g.remove_edge(edges_to_remove)
 
 g.remove_edge_by_objects()
 
-
 # Пример поиска кратчайшего пути
 start = (0, 0)
 goal = (4, 4)
@@ -380,4 +408,3 @@ print(f"Кратчайший путь: {path}")
 
 # Визуализируем граф с кратчайшим путём
 g.visualize(path)
-
