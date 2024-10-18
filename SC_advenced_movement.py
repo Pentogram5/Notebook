@@ -15,6 +15,7 @@ class RobotAdvencedMovement:
     def __init__(self, rb=rb,
                  L=0.21, # Расстояние между центрами гусениц
                  R_of_success=0.15, # В пределах какого радиуса считаем, что мы достигли заданной точки
+                 R_max=1, # Максимальный радиус поворота
                  fps = 20
                  ):
         self.rb = rb
@@ -22,9 +23,10 @@ class RobotAdvencedMovement:
         self.R = R_of_success
         self.v = 0
         self.w = 0
+        self.R_max = R_max
         
         # Параметры регулятора
-        self.max_angle_speed = 20
+        self.max_angle_speed = 90
         self.max_speed = self.rb.max_speed
         self.tau = 0.1 # Rate tau
         self.tr = ThreadRate(fps) # Частота обновления регулятора
@@ -106,10 +108,18 @@ class RobotAdvencedMovement:
             
             # Поиск требуемового yaw rate
             delta_angle = get_shortest_angle_path(angle, desired_angle)
-            print(delta_angle)
+            # print(delta_angle)
             yaw_rate = delta_angle / self.tau
-            if abs(yaw_rate) > self.max_angle_speed:
+            yaw_rate = min(yaw_rate, self.max_angle_speed)
+            eps = 5
+            R = 0
+            if abs(yaw_rate)>eps:
+                R = abs(v/yaw_rate)
+            if R > self.R_max:
                 v = 0
+            print(R, v)
+            # if abs(yaw_rate) > self.max_angle_speed:
+            #     v = 0
             
             w = yaw_rate
             self.set_speeds(v, w)
