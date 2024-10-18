@@ -34,6 +34,22 @@ def get_angle(p1, p2):
     
     return angle_final
 
+def sgn(x):
+    """Return the sign of a float.
+    
+    Args:
+        x (float): The input number.
+
+    Returns:
+        int: -1 if x is negative, 1 if x is positive, 0 if x is zero.
+    """
+    if x > 0:
+        return 1
+    elif x < 0:
+        return -1
+    else:
+        return 0
+
 # def get_shortest_angle_path(x, y):
 #     """
 #     Находит кратчайшую разницу между двумя углами в градусах.
