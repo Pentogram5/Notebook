@@ -2,7 +2,7 @@ from SC_advenced_movement import ram
 from SC_API_tcp import *
 
 from pid import PID
-pid = PID(1, 0, 0)
+pid = PID(0.00001, 0, 0)
 
 import cv2
 from ultralytics import YOLO
@@ -67,22 +67,21 @@ def getXofObject():
 class Grabber:
     image_w = 640
     image_h = 480
-    speed = 30
+    speed = 0
 
     def __init__(self, ram, pid):
         self.tau = 1
         self.ram = ram
         self.pid = pid
-        # self.pid.setpoint = self.image_w // 2
-        # self.pid.output_limits = (-60, 60)
-        # pid.tunings = (-1.0, -0.1, 0)
+        self.pid.setpoint = self.image_w // 2
+        self.pid.output_limits = (-10, 10)
+        pid.tunings = (-1.0, -0.1, 0)
 
     def capture(self):
-        last_err = 0
         while True:
             err = getXofObject()
             if err is None:
-                err = last_err
+                err = self.pid.setpoint
             rate = err/self.tau
             w = self.pid(rate)
             print(rate, w)
@@ -92,5 +91,6 @@ class Grabber:
 
 
 init_clients()
-G = Grabber(ram, pid)
-G.capture()
+ram.set_speeds(0,0)
+# G = Grabber(ram, pid)
+# G.capture()

@@ -213,6 +213,20 @@ class RobotAdvencedMovement:
         self.w = w
         
         # print(lms, rms)
+        eps = 5
+        if abs(lms)>eps:
+            lms_abs = abs(lms)
+            lms_sgn = sgn(lms)
+            lms = lms_sgn * max(10, lms_abs)
+        else:
+            lms = 0
+        if abs(rms)>eps:
+            rms_abs = abs(rms)
+            rms_sgn = sgn(rms)
+            rms = rms_sgn * max(10, rms_abs)
+            # print(rms)
+        else:
+            rms = 0
         self.rb.set_speed_cms_left(lms)
         self.rb.set_speed_cms_right(rms)
         
@@ -371,6 +385,32 @@ def main_test_move_to_target():
         rb.set_speed_cms_left(0)
         rb.set_speed_cms_right(0)
 
+def main_test_input():
+    import keyboard
+
+    # Инициализация клиентов
+    init_clients()
+    IR_G, IR_R, IR_B, ULTRASONIC = get_constants()
+
+    def update_speeds():
+        v, w = list(map(float, input().split(' ')))
+        # Устанавливаем скорости моторов
+        ram.set_speeds(v, w)
+
+    # Основной цикл управления
+    try:
+        while True:
+            IR_G, IR_R, IR_B, ULTRASONIC = get_constants()
+            update_speeds()
+            # print(IR_R)
+            # print(get_our_position_rotation())
+            time.sleep(0.03)
+    except KeyboardInterrupt:
+        # Остановка моторов при завершении программы
+        rb.set_speed_cms_left(0)
+        rb.set_speed_cms_right(0)
+
 if __name__=='__main__':
-   main_test_move_to_target()
-  #main_test_wasd()
+    #main_test_move_to_target()
+    # main_test_wasd()
+    main_test_input()
