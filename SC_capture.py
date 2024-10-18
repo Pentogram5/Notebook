@@ -119,13 +119,13 @@ class Grabber:
         while time.time() - beginTime < 30:
             _, conf = getXofObject()
             averageConf = self.average(self.averageParamConf, conf)
+            print('search', averageConf)
             if averageConf < 0.4:
                 self.ram.set_speeds(0, 5)
             elif averageConf < 0.8:
                 self.ram.set_speeds(0, 0)
             else:
                 return True
-            print('search', averageConf)
         return False
     
     def aim(self):
@@ -149,7 +149,7 @@ class Grabber:
             w = pid(x)
             self.ram.set_speeds(25, w)
             print('sneak', x, w)
-            
+
         return False
         
     def capture(self):
