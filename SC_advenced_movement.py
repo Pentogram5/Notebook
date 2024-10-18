@@ -10,6 +10,52 @@ class RobotActions:
 class OnDoneActions:
     STOP = 0
     WAIT = 1
+    
+import numpy as np
+
+
+class Filter:
+    def cast(self, arr):
+        if not (type(arr) in (list, tuple)):
+            arr = (arr,)
+        assert all([type(a) in (int, float) for a in arr]), "Unsupported data type"
+        return arr
+
+
+# Robustness filter
+class MEAN_STD(Filter):
+    def __init__(self, fifo_n=5):
+        self.fifo = []
+        self.fifo_n = fifo_n
+
+    def filter(self, arr):
+        # Casting
+        arr = self.cast(arr)
+        np_arr = np.array(arr)
+        self.fifo.append(arr)
+        # Finding array parameters
+        mean = np.mean(self.fifo, axis=0)
+        std = np.std(self.fifo, axis=0)
+        # Finding inappropriate values
+        replace_mask = abs(np_arr - mean) > std
+        # Filtering
+        np_arr[replace_mask] = mean[replace_mask]
+        # Append to array
+
+        # Check for data trust
+        if len(self.fifo) > self.fifo_n:
+            # print(self.fifo,'DEL')
+            del self.fifo[0]
+            # We can trust the datas
+            return type(arr)(np_arr)
+        else:
+            # We can't, return at least mean
+            return type(arr)(mean)
+
+    def clear(self):
+        del self.fifo
+        self.fifo = []
+
 
 class RobotAdvencedMovement:
     def __init__(self, rb=rb,
