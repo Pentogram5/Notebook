@@ -19,7 +19,7 @@ class RobotDirection:
     def __init__(self):
         self.left_cms = 0
         self.right_cms = 0
-        self.max_speed = 36
+        self.max_speed = 50
     
     def set_speed_cms_left(self, speed):
         self.left_cms = speed

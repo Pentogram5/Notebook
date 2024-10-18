@@ -216,17 +216,17 @@ class RobotAdvencedMovement:
         self.w = w
         
         # print(lms, rms)
-        eps = 5
+        eps = 0.1
         if abs(lms)>eps:
             lms_abs = abs(lms)
             lms_sgn = sgn(lms)
-            lms = lms_sgn * max(10, lms_abs)
+            lms = lms_sgn * max(0, lms_abs)
         else:
             lms = 0
         if abs(rms)>eps:
             rms_abs = abs(rms)
             rms_sgn = sgn(rms)
-            rms = rms_sgn * max(10, rms_abs)
+            rms = rms_sgn * max(0, rms_abs)
             # print(rms)
         else:
             rms = 0
@@ -415,5 +415,5 @@ def main_test_input():
 
 if __name__=='__main__':
     # main_test_move_to_target()
-    main_test_wasd()
-    # main_test_input()
+    # main_test_wasd()
+    main_test_input()
