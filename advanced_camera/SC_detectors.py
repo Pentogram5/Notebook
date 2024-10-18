@@ -75,6 +75,7 @@ class TopCameraHandler:
         elif framework==CamFrameWorks.testFiles:
             self.cam = FileCamera(T=fake_img_update_period)
         self.frame, self.timestamp = None, 0
+        self.last_processed_frame = None
         
         ret = False
         while not ret:
@@ -97,6 +98,15 @@ class TopCameraHandler:
         
         # self.start_camera_handling()
         
+        # Запущена ли YOLO в данный момент
+        self.is_yolo_running = True
+    
+    def continue_yolo(self):
+        self.is_yolo_running = True
+        
+    def pause_yolo(self):
+        self.is_yolo_running = False
+        
     def isOpened(self):
         return True
     
@@ -110,6 +120,11 @@ class TopCameraHandler:
     def read(self):
         ret = (self.frame is not None)
         return ret, self.frame
+
+    def read_yolo(self):
+        print(self.last_processed_frame)
+        ret = (self.last_processed_frame is not None)
+        return ret, self.last_processed_frame
     
     #!!!
     def read_with_timestamp(self):
@@ -142,23 +157,26 @@ class TopCameraHandler:
         while True:
             frame = self.frame
             # print((frame is not None) and self.has_new_frame_to_process)
-            if (frame is not None) and self.has_new_frame_to_process:
-                # Сохранение времени последнего поступившего кадра
-                self.timestamp_yolo = time.time_ns() 
-                # Получения предсказания и оценка задержки
-                ts_inference.timestamp()
-                res = model.predict(frame, verbose=False)
-                self.inference_yolo = ts_inference.timestamp()
-                print(self.inference_yolo)
-                
-                # Запись результатов
-                self.results = res
-                
-                # Сохранение времени последнего обработанного изображения, чтобы проверить на изменения в изображении
-                self.last_timestamp_yolo = self.timestamp_yolo
-                
-                # Старый фрейм мы обработали, ждём новый
-                self.has_new_frame_to_process = False
+            if self.is_yolo_running:
+                if (frame is not None) and self.has_new_frame_to_process:
+                    # Сохранение времени последнего поступившего кадра
+                    self.timestamp_yolo = time.time_ns() 
+                    # Получения предсказания и оценка задержки
+                    ts_inference.timestamp()
+                    res = model.predict(frame, verbose=False)
+                    self.inference_yolo = ts_inference.timestamp()
+                    print(self.inference_yolo)
+                    self.last_processed_frame = frame
+                    # print(self.last_processed_frame)
+                    
+                    # Запись результатов
+                    self.results = res
+                    
+                    # Сохранение времени последнего обработанного изображения, чтобы проверить на изменения в изображении
+                    self.last_timestamp_yolo = self.timestamp_yolo
+                    
+                    # Старый фрейм мы обработали, ждём новый
+                    self.has_new_frame_to_process = False
             self.tr_yolo.sleep()
     
     
@@ -178,7 +196,7 @@ class TopCameraHandler:
         x, y = None, None
         return x, y, ts
 
-    def get_our_raw_rotation(self):
+    def _get_our_raw_rotation(self):
         # Возвращает
         # - курс нашего робота на основании CV в градусах
         # - timestamp с которых их получили
