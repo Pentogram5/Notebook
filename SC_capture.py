@@ -1,8 +1,8 @@
 from SC_advenced_movement import ram
 from SC_API_tcp import *
+from SC_API_tcp import perform_action_capture
 
 from pid import PID
-pid = PID(0.00001, 0, 0)
 
 import cv2
 from ultralytics import YOLO
@@ -13,7 +13,6 @@ model = YOLO('yolo_for_camera_robot.pt')
 
 
 def center(obj_class, results):
-
     xc = 0
     yc = 0
     max_conf = 0
@@ -30,9 +29,9 @@ def center(obj_class, results):
                 max_conf = score
                 fl = True
     if fl:
-        return xc, yc
+        return xc, yc, max_conf
     else:
-        return None, None
+        return None, None, max_conf
 
 
 def getXofObject():
@@ -60,37 +59,139 @@ def getXofObject():
     #cv2.imshow('gray feed', gray)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         return
-    xc, yc = center('cube', res)
+    xc, yc, conf = center('cube', res)
     # print(xc, yc)
-    return xc
+    return xc, conf
 
 class Grabber:
     image_w = 640
     image_h = 480
-    speed = 0
+    image_aim = 20  # %
+    states = {
+        1: 'search',
+        2: 'sneak',
+        3: 'aim',
+        4: 'grab',
+        5: 'check',
+        6: 'error',
+    }
+    pids = {
+        1: PID(-0.005, 0, 0, setpoint=image_w//2, output_limits=(-40, 40)),
+        2: PID(-0.005, 0, 0, setpoint=image_w//2, output_limits=(-40, 40)),
+    }
+    currentState = None
 
-    def __init__(self, ram, pid):
-        self.tau = 1
+    averageParamConf = {
+        'windowSize': 5,
+        'arr': [],
+        'average': 0.0,
+        'ind': 0,
+    }
+
+    averageParamX = {
+        'windowSize': 10,
+        'arr': [],
+        'average': 0.0,
+        'ind': 0,
+    }
+
+    def __init__(self, ram):
         self.ram = ram
-        self.pid = pid
-        self.pid.setpoint = self.image_w // 2
-        self.pid.output_limits = (-10, 10)
-        pid.tunings = (-1.0, -0.1, 0)
+        self.currentState = 1
+    
+    def currentState(self):
+        return 'Current state: ' + self.states(self.currentState)
+    
+    def average(self, param, newData):
+        if not param['arr']:
+            param['arr'] = [newData] * param['windowSize']
+            param['average'] = newData
+        if param['ind'] >= param['windowSize']:
+            param['ind'] = 0
+        param['average'] -= param['arr'][param['ind']] / param['windowSize']
+        param['average'] += newData / param['windowSize']
+        param['arr'][param['ind']] = newData
+        param['ind'] += 1
+        return param['average']
+    
+    def search(self):
+        beginTime = time.time()
+        while time.time() - beginTime < 30:
+            _, conf = getXofObject()
+            averageConf = self.average(self.averageParamConf, conf)
+            if averageConf < 0.4:
+                self.ram.set_speeds(0, 5)
+            elif averageConf < 0.8:
+                self.ram.set_speeds(0, 0)
+            else:
+                return True
+            print('search', averageConf)
+        return False
+    
+    def aim(self):
+        pid = self.pids[1]
+        beginTime = time.time()
+        while time.time() - beginTime < 30:
+            x, conf = getXofObject()
+            w = pid(x)
+            self.ram.set_speeds(0, w)
+            print('aim', x, w)
+            averageX = self.average(self.averageParamX, x)
+            if abs(2 * averageX - self.image_w) // self.image_w * 100 < self.averageParamX:
+                return True
+        return False
 
+    def sneak(self):
+        pid = self.pids[2]
+        beginTime = time.time()
+        while time.time() - beginTime < 30:
+            x, conf = getXofObject()
+            w = pid(x)
+            self.ram.set_speeds(25, w)
+            print('sneak', x, w)
+            
+        return False
+        
     def capture(self):
-        while True:
-            err = getXofObject()
-            if err is None:
-                err = self.pid.setpoint
-            rate = err/self.tau
-            w = self.pid(rate)
-            print(rate, w)
-            self.ram.set_speeds(self.speed, w)
-            print(self.speed, w)
-            last_err = err
+        perform_action_capture()
+    
+    def mainProcess(self):
+        result = True
+
+        if result:
+            self.currentState = 1
+            print(self.currentState())
+            result = self.search()
+
+        if result:
+            self.currentState = 2
+            print(self.currentState())
+            result = self.aim()
+        
+        if result:
+            self.currentState = 3
+            print(self.currentState())
+            result = self.sneak()
+        
+        if result:
+            self.currentState = 4
+            print(self.currentState())
+            result = self.capture()
+        
+        if result:
+            self.currentState = 5
+            print(self.currentState())
+            result = not self.sneak()
+        
+        if not result:
+            self.currentState = 6
+            print(self.currentState())
+        
+        return result
 
 
-init_clients()
+
+#init_clients()
 ram.set_speeds(0,0)
-# G = Grabber(ram, pid)
-# G.capture()
+G = Grabber(ram)
+#G.capture()
