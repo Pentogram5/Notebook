@@ -1,4 +1,4 @@
-from SC_API_tcp import *
+from SC_API_sim import *
 import math as m
 from SC_utils import *
 
@@ -13,7 +13,7 @@ class OnDoneActions:
 
 class RobotAdvencedMovement:
     def __init__(self, rb=rb,
-                 L=0.3, # Расстояние между центрами гусениц
+                 L=0.21, # Расстояние между центрами гусениц
                  R_of_success=0.15, # В пределах какого радиуса считаем, что мы достигли заданной точки
                  fps = 20
                  ):
