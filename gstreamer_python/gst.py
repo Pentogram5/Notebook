@@ -3,19 +3,21 @@ import threading
 import time
 import cv2
 from wincam import DXCamera  # Importing the new camera module
-from .windowsing import *
+from windowsing import *
 
 class GstCam:
-    cam1 = 'rtsp://Admin:rtf123@192.168.2.251/251:554/1/1'
-    cam2 = 'rtsp://Admin:rtf123@192.168.2.250/251:554/1/1'
+    cam1 = 'rtsp://Admin:rtf123@192.168.2.250/251:554/1/1'
+    cam2 = 'rtsp://Admin:rtf123@192.168.2.251/251:554/1/1'
     command = 'gst-launch-1.0 rtspsrc location={} latency=0 ! decodebin ! autovideosink'
 
-    def __init__(self, w=1333, h=889, fps=120):
+    def __init__(self, w=1333, h=889, fps=120, margin=(20,50,20,20)):
+        # l,t,r,b
         self.win_name = "Direct3D11 renderer"
         self.camera = None
         self.fps = fps
         self.w = w
         self.h = h
+        self.margin = margin
 
     def _run_cam(self, c):
         if c == -1:
@@ -38,8 +40,11 @@ class GstCam:
 
         # Get the list of all windows and search for the target window
         windows = gw.getWindowsWithTitle(self.win_name)
-        if not windows:
-            raise ValueError(f"Окно с именем '{self.win_name}' не найдено.")
+        while not windows:
+            windows = gw.getWindowsWithTitle(self.win_name)
+            print(f"Окно с именем '{self.win_name}' не найдено.")
+            time.sleep(1)
+            # raise ValueError(f"Окно с именем '{self.win_name}' не найдено.")
         
         target_window = windows[0]  # Take the first found window
 
@@ -55,7 +60,12 @@ class GstCam:
             
         # w = region[2]-region[0]
         # h = region[3]-region[1]
-        self.camera = DXCamera(*region[0:2], w, h, fps=self.fps)  # Create a new camera instance
+        x, y, w, h = region[0], region[1], w, h
+        x += self.margin[0]
+        y += self.margin[1]
+        w -= self.margin[2]+self.margin[0]
+        h -= self.margin[3]+self.margin[1]
+        self.camera = DXCamera(x, y, w, h, fps=self.fps)  # Create a new camera instance
         # Start capturing in the specified area
         # self.camera.start(region=region, target_fps=self.fps)
 
@@ -80,7 +90,7 @@ class GstCam:
 if __name__=='__main__':
     # Main execution
     cam = GstCam()
-    cam.VideoCapture(-1)
+    cam.VideoCapture(0)
 
     print('AAAA')
     while True:
