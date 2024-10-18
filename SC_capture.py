@@ -188,10 +188,13 @@ class Grabber:
             print(self.currentState())
         
         return result
+    
+    def stop(self):
+        self.ram.set_speeds(0, 0)
 
 
 
 #init_clients()
-ram.set_speeds(0,0)
+#ram.set_speeds(0,0)
 G = Grabber(ram)
-#G.capture()
+G.capture()
