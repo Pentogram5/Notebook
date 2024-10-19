@@ -63,10 +63,35 @@ def getXofObject():
     # print(xc, yc)
     return xc, conf
 
+class Average:
+    _arr = []
+    _ind = 0
+    average = 0.0
+    windowSize = 0
+
+    def __init__(self, windowSize):
+        self.windowSize = windowSize
+        
+    
+    def __call__(self, newValue):
+        if not self._arr:
+            self._arr = [newValue] * self.windowSize
+            self.average = newValue
+        if self._ind >= self.windowSize:
+            self._ind = 0
+        self.average -= self._arr[self._ind] / self.windowSize
+        self.average += newValue / self.windowSize
+        self._arr[self._ind] = newValue
+        self._ind += 1
+        return self.average
+
+    
+
+
 class Grabber:
     image_w = 640
     image_h = 480
-    image_aim = 20  # %
+    image_aim = 10  # %
     states = {
         1: 'search',
         2: 'sneak',
@@ -76,52 +101,29 @@ class Grabber:
         6: 'error',
     }
     pids = {
-        1: PID(-0.005, 0, 0, setpoint=image_w//2, output_limits=(-40, 40)),
-        2: PID(-0.005, 0, 0, setpoint=image_w//2, output_limits=(-40, 40)),
+        1: PID(-0.1, 0, 0, setpoint=image_w//2, output_limits=(-40, 40)),
+        2: PID(-0.1, 0, 0, setpoint=image_w//2, output_limits=(-40, 40)),
     }
     currentState = None
 
-    averageParamConf = {
-        'windowSize': 5,
-        'arr': [],
-        'average': 0.0,
-        'ind': 0,
-    }
-
-    averageParamX = {
-        'windowSize': 10,
-        'arr': [],
-        'average': 0.0,
-        'ind': 0,
-    }
-
     def __init__(self, ram):
+        init_clients()
         self.ram = ram
         self.currentState = 1
     
-    def currentState(self):
-        return 'Current state: ' + self.states(self.currentState)
-    
-    def average(self, param, newData):
-        if not param['arr']:
-            param['arr'] = [newData] * param['windowSize']
-            param['average'] = newData
-        if param['ind'] >= param['windowSize']:
-            param['ind'] = 0
-        param['average'] -= param['arr'][param['ind']] / param['windowSize']
-        param['average'] += newData / param['windowSize']
-        param['arr'][param['ind']] = newData
-        param['ind'] += 1
-        return param['average']
+    def getCurrentState(self):
+        return 'Current state: ' + self.states[self.currentState]
+
     
     def search(self):
+        A = Average(10)
         beginTime = time.time()
         while time.time() - beginTime < 30:
             _, conf = getXofObject()
-            averageConf = self.average(self.averageParamConf, conf)
+            averageConf = A(conf)
             print('search', averageConf)
             if averageConf < 0.4:
-                self.ram.set_speeds(0, 5)
+                self.ram.set_speeds(0, 50)
             elif averageConf < 0.8:
                 self.ram.set_speeds(0, 0)
             else:
@@ -129,63 +131,84 @@ class Grabber:
         return False
     
     def aim(self):
+        A = Average(10)
         pid = self.pids[1]
+        count = 0
         beginTime = time.time()
         while time.time() - beginTime < 30:
-            x, conf = getXofObject()
-            w = pid(x)
-            self.ram.set_speeds(0, w)
-            print('aim', x, w)
-            averageX = self.average(self.averageParamX, x)
-            if abs(2 * averageX - self.image_w) // self.image_w * 100 < self.averageParamX:
-                return True
+            x, _ = getXofObject()
+            if x:
+                count = 20
+                w = pid(x)
+                self.ram.set_speeds(0, w)
+                averageX = A(x)
+                print('aim', x, w, abs(2 * averageX - self.image_w) * 100 / self.image_w)
+                if abs(2 * averageX - self.image_w) * 100 / self.image_w < self.image_aim:
+                    self.stop()
+                    return True
+            elif count < 20:
+                count += 1
+            else:
+                break
+        self.stop()
         return False
 
     def sneak(self):
         pid = self.pids[2]
+        count = 20
         beginTime = time.time()
         while time.time() - beginTime < 30:
             x, conf = getXofObject()
-            w = pid(x)
-            self.ram.set_speeds(25, w)
-            print('sneak', x, w)
-
+            if x:
+                w = pid(x)
+                self.ram.set_speeds(6, w)
+                print('sneak', x, w)
+                print(Sensors.IR_R.filteredValue)
+                if Sensors.IR_R.filteredValue < 0.2:
+                    self.stop()
+                    return True
+            elif count > 0:
+                count -= 1
+            else:
+                break
+        self.stop()
         return False
         
     def capture(self):
         perform_action_capture()
+        return True
     
     def mainProcess(self):
         result = True
 
         if result:
             self.currentState = 1
-            print(self.currentState())
+            print(self.getCurrentState())
             result = self.search()
 
         if result:
             self.currentState = 2
-            print(self.currentState())
+            print(self.getCurrentState())
             result = self.aim()
         
         if result:
             self.currentState = 3
-            print(self.currentState())
+            print(self.getCurrentState())
             result = self.sneak()
         
         if result:
             self.currentState = 4
-            print(self.currentState())
+            print(self.getCurrentState())
             result = self.capture()
         
         if result:
             self.currentState = 5
-            print(self.currentState())
+            print(self.getCurrentState())
             result = not self.sneak()
         
         if not result:
             self.currentState = 6
-            print(self.currentState())
+            print(self.getCurrentState())
         
         return result
     
@@ -194,7 +217,4 @@ class Grabber:
 
 
 
-#init_clients()
-#ram.set_speeds(0,0)
 G = Grabber(ram)
-G.capture()
