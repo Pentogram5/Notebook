@@ -279,6 +279,56 @@ def get_click_position():
     else:
         return None
 
+
+
+
+
+
+
+
+
+
+class TopCameraHandler:
+    # Handles actions of top camera
+    cam1_url = "rtsp://Admin:rtf123@192.168.2.250/251:554/1/1"
+    cam2_url = "rtsp://Admin:rtf123@192.168.2.251/251:554/1/1"
+    def __init__(self, cam, framework=0, fps_cam=30, fps_yolo=30, use_undist=True, fake_img_update_period=5,
+                 cam_uncontrolled_delay=0.250, cam_controlled_delay=0.100):
+        ...
+        self.posiiton_data_buffer = [{'data':(0,0),'timestamp':0}]
+        self.yaw_data_buffer      = [{'data':(0,0),'timestamp':0}]
+    def _update_position(self):
+        
+    def get_our_raw_position(self):
+        # Возвращает
+        # - позицию нашего робота в см на основании CV
+        # - timestamp с которого их получили
+        ts = self.timestamp_yolo
+        x, y = None, None
+        return x, y, ts
+
+    def _get_our_raw_rotation(self):
+        # Возвращает
+        # - курс нашего робота на основании CV в градусах
+        # - timestamp с которых их получили
+        # 0  градусов соответствует +Ox
+        # 90 градусов соответствует +Oy
+        ts = self.timestamp_yolo
+        yaw = None
+        return yaw, ts
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Основной игровой цикл
 def main():
     global tank

@@ -33,4 +33,4 @@ while tch.isOpened():
     #cv2.imshow('Video Stream', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
-    time.sleep(1)
+    # time.sleep(1)

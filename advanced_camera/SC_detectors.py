@@ -55,6 +55,9 @@ VIDEO_TEST_PATH = ""
 # res = model.predict(frame)
 # print(res)
 
+def thread_safe_predict(image_path):
+    ...
+
 class TopCameraHandler:
     # Handles actions of top camera
     cam1_url = "rtsp://Admin:rtf123@192.168.2.250/251:554/1/1"
@@ -100,6 +103,7 @@ class TopCameraHandler:
         
         # Запущена ли YOLO в данный момент
         self.is_yolo_running = True
+        self.ts_inference = TimeStamper()
     
     def continue_yolo(self):
         self.is_yolo_running = True
@@ -122,7 +126,8 @@ class TopCameraHandler:
         return ret, self.frame
 
     def read_yolo(self):
-        print(self.last_processed_frame)
+        # print(self.last_processed_frame)
+        time.sleep(0)
         ret = (self.last_processed_frame is not None)
         return ret, self.last_processed_frame
     
@@ -148,32 +153,36 @@ class TopCameraHandler:
                 self.frame = frame
                 self.has_new_frame_to_process = True
             self.tr_cam.sleep()
-            
+    
+    def _predict(self, frame):
+        model = YOLO('best_nano.pt', verbose=False)
+        # Получения предсказания и оценка задержки
+        self.ts_inference.timestamp()
+        res = model.predict(frame, verbose=False)
+        # Сохранение времени последнего поступившего кадра
+        self.timestamp_yolo = time.time_ns() 
+        
+        self.inference_yolo = self.ts_inference.timestamp()
+        self.last_processed_frame = frame
+        # print(self.last_processed_frame)
+        
+        # Запись результатов
+        self.results = res
+        
+        # Сохранение времени последнего обработанного изображения, чтобы проверить на изменения в изображении
+        self.last_timestamp_yolo = self.timestamp_yolo
     
     def _process_data(self):
-        model = YOLO('best_nano.pt', verbose=False)
         # ts           = TimeStamper()
-        ts_inference = TimeStamper()
+        ts = TimeStamper()
         while True:
             frame = self.frame
             # print((frame is not None) and self.has_new_frame_to_process)
             if self.is_yolo_running:
                 if (frame is not None) and self.has_new_frame_to_process:
-                    # Сохранение времени последнего поступившего кадра
-                    self.timestamp_yolo = time.time_ns() 
-                    # Получения предсказания и оценка задержки
-                    ts_inference.timestamp()
-                    res = model.predict(frame, verbose=False)
-                    self.inference_yolo = ts_inference.timestamp()
-                    print(self.inference_yolo)
-                    self.last_processed_frame = frame
-                    # print(self.last_processed_frame)
-                    
-                    # Запись результатов
-                    self.results = res
-                    
-                    # Сохранение времени последнего обработанного изображения, чтобы проверить на изменения в изображении
-                    self.last_timestamp_yolo = self.timestamp_yolo
+                    self._predict(frame)
+                    # th = threading.Thread(target=self._predict, args=(frame,))
+                    # th.start()
                     
                     # Старый фрейм мы обработали, ждём новый
                     self.has_new_frame_to_process = False
