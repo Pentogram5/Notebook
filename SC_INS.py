@@ -149,6 +149,10 @@ class UpdateSource:
         timestamp_s = 0
         return yaw, timestamp_s
 
+
+
+from SC_KalmanFilters import KalmanFilter_PosYaw
+
 # TODO - реализовать фильтрацию по STD по последним 2-3 значениям. Если находит не того робота (val>mean+-STD), то вернуть None, и оставить только предикт
 class INS:
     def __init__(self,
@@ -170,16 +174,21 @@ class INS:
         self._position = np.array((0,0))
         self._yaw      = 0
         
+        self.summary_position = np.array((0,0))
+        self.summary_yaw      = 0
+        
         # Update sources
         self.update_source = update_source
         if ram is None:
             self.ram = RobotAdvencedMovement()
         self.ram = ram
+        self.ram.ins = self
         self.tr_speed = ThreadRate(speed_update_rate)
                     
         # # Wheights of sources
         # self.P_of_pos_predict = 0.5
         # self.P_of_yaw_predict = 0.5
+        self.kalman_filter = KalmanFilter_PosYaw(update_rate=speed_update_rate)
     
     def start_updater(self):
         self.th_pos = threading.Thread(target=self._update_pos)
@@ -223,6 +232,14 @@ class INS:
         # print(get_unit_vector(self.get_yaw()), v, self.get_yaw())
         self.pos_integrator.update(V, current_time)
         self.yaw_integrator.update(w, current_time)
+        
+        summary_position = self._position + self.pos_integrator.S
+        summary_yaw      = self._yaw      + self.yaw_integrator.S
+        
+        summary_position, summary_yaw = self.kalman_filter.update_current_state(summary_position, V, summary_yaw, w)
+        
+        self.summary_position, self.summary_yaw = summary_position, float(summary_yaw)
+        
         self.speeds_are_updated = True
     
     # Обнровляет текущую позицию
@@ -262,10 +279,10 @@ class INS:
         self.yaw_integrator.clear()
     
     def get_pos(self):
-        return self._position + self.pos_integrator.S
+        return self.summary_position
     
     def get_yaw(self):
-        return self._yaw + self.yaw_integrator.S
+        return self.summary_yaw
         
         
 
@@ -359,8 +376,52 @@ def main_test_simulator():
             draw_dote2((x, y))
             
             draw_line1((x, y), add((x, y),get_unit_vector(ins.get_yaw())))
+            
             # print(len(ins.pos_integrator.fifo_dS_data))
-            update_speeds()
+            # update_speeds()
+            # print(IR_R)
+            # print(get_our_position_rotation())
+            time.sleep(0.03)
+    except KeyboardInterrupt:
+        # Остановка моторов при завершении программы
+        rb.set_speed_cms_left(0)
+        rb.set_speed_cms_right(0)
+        
+def main_move_to_point_simulator():
+    import SC_API_sim
+    
+    # ram = SC_API_sim.ram
+
+    # Инициализация клиентов
+    SC_API_sim.init_clients()
+    IR_G, IR_R, IR_B, ULTRASONIC = get_constants()
+    
+    tch = simulator.SC_sim.TopCameraHandler(controlled_delay=0.4, delay_std=0.25, pos_std=0.05, yaw_std=5)
+    ins = INS(update_source=tch.update_sink, ram=ram, speed_update_rate=60)
+    ins.start_updater()
+    
+    # Основной цикл управления
+    try:
+        while True:
+            # IR_G, IR_R, IR_B, ULTRASONIC = get_constants()
+            # print(Sensors.IR_G)
+            del_pos = tch.delayed_p
+            # del_yaw = tch.delayed_yaw
+            draw_dote(del_pos)
+            x, y = ins.get_pos()
+            draw_dote2((x, y))
+            
+            draw_line1((x, y), add((x, y),get_unit_vector(ins.get_yaw())))
+            
+            mouse_pos = get_click_position()
+            if mouse_pos is not None:
+                p = mouse_pos
+                ram.move_to_point(p, look_at=(0,0), on_done=OnDoneActions.LOOK)
+            
+            # print(ram.rb.left_cms, ram.rb.right_cms)
+            
+            # print(len(ins.pos_integrator.fifo_dS_data))
+            # update_speeds()
             # print(IR_R)
             # print(get_our_position_rotation())
             time.sleep(0.03)
@@ -371,4 +432,4 @@ def main_test_simulator():
     
 
 if __name__=='__main__':
-    main_test_simulator()
+    main_move_to_point_simulator()

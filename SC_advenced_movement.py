@@ -10,6 +10,7 @@ class RobotActions:
 class OnDoneActions:
     STOP = 0
     WAIT = 1
+    LOOK = 2
     
 import numpy as np
 
@@ -155,9 +156,12 @@ def max_sgn(a, max_val):
 class RobotAdvencedMovement:
     def __init__(self, rb=rb,
                  L=0.21, # Расстояние между центрами гусениц
-                 R_of_success=0.15, # В пределах какого радиуса считаем, что мы достигли заданной точки
+                 R_of_success=0.10, # В пределах какого радиуса считаем, что мы достигли заданной точки
                  R_max=0.3, # Максимальный радиус поворота
-                 fps = 20
+                 fps = 20,
+                 ins = None,
+                 tau = 0.1,      # Парампетр регулятора для поворота во время езды
+                 tau_fast = 0.5  # Параметр регулятора для быстрого разворота
                  ):
         self.rb = rb
         self.L = L
@@ -174,7 +178,9 @@ class RobotAdvencedMovement:
         # Параметры регулятора
         self.max_angle_speed = 90
         self.max_speed = self.rb.max_speed
-        self.tau = 0.1 # Rate tau
+        self.tau      = tau # Rate tau
+        self.tau_fast = tau_fast
+        
         self.tr = ThreadRate(fps) # Частота обновления регулятора
         self.ts = TimeStamper()
         
@@ -185,10 +191,15 @@ class RobotAdvencedMovement:
         self.desired_speed = 0
         self.new_command_timeout = 2 # Время ожидания поступления новой комманды. Чтобы робот двигался плавно
         self.on_done = OnDoneActions.STOP
+        self.on_done_look_at = (0,0)  # Точка, в которую робот должен смотреть после прохождения маршрута. Работает только с OnDone.LOOK
+        
+        self.ins = ins
     
     # def set_speeds
     def get_pos_rot(self):
-        x, y, angle = get_our_position_rotation()
+        x, y  = self.ins.get_pos()
+        angle = self.ins.get_yaw()
+        # x, y, angle = get_our_position_rotation()
         return x, y, angle
     
     def set_speeds(self,
@@ -235,13 +246,16 @@ class RobotAdvencedMovement:
         
         self.ts = TimeStamper()
     
-    def move_to_point(self, p, v=None, on_done=OnDoneActions.STOP):
+    def move_to_point(self, p, v=None, on_done=OnDoneActions.STOP, look_at=None):
         if v==None:
             v = self.max_speed
+        self.on_done_look_at = look_at
+        
         # Двигаемся к заданной точке p
         if  (self.current_action == RobotActions.IDLE):
             self.current_point = p
             self.desired_speed = v
+            self.on_done = on_done
             self.current_action = RobotActions.MOVING_TO_POINT
             self.mp_thread = threading.Thread(target=self._movement_to_point)
             self.mp_thread.start()
@@ -249,6 +263,7 @@ class RobotAdvencedMovement:
         if (self.current_action == RobotActions.MOVING_TO_POINT):
             self.desired_speed = v
             self.current_point = p
+            self.on_done = on_done
             
     
     def stop_moving_to_point(self):
@@ -259,6 +274,11 @@ class RobotAdvencedMovement:
             self.mp_thread.stop()
             self.current_action = RobotActions.IDLE
             return True
+        
+    def is_auto_moving(self):
+        # Returns True if robot is still moving by autonomos movment
+        return self.current_action != RobotActions.IDLE
+        
     
     def _movement_to_point(self):
         # Обрабатываем движение к заданной точке
@@ -273,11 +293,13 @@ class RobotAdvencedMovement:
             
             # Поиск требуемового yaw rate
             delta_angle = get_shortest_angle_path(angle, desired_angle)
-            # print(delta_angle)
             yaw_rate = delta_angle / self.tau
             yaw_rate = min_sgn(yaw_rate, self.max_angle_speed)
+            
+            # Фильтрация данных на основании минимального радиуса поворота
             R = 0
             if (abs(yaw_rate)>self.eps_rate) and (abs(delta_angle) > self.eps_angles):
+                #!!! print(v, yaw_rate, dt)
                 R_non_abs = self.filter.filter(v/yaw_rate, dt)
                 R = abs(R_non_abs)
             if R > self.R_max:
@@ -286,15 +308,15 @@ class RobotAdvencedMovement:
             #     v = 0
             
             w = yaw_rate
-            print(R, v, w, delta_angle)
+            #!!! print(R, v, w, delta_angle)
             self.set_speeds(v, w)
             self.tr.sleep()
             
             # Принимаем решение о выходе из цикла
             if get_distance((x,y), self.current_point) <= self.R:
                 # Если достигли точки, то что делаем?
-                self.current_action = RobotActions.IDLE
                 if self.on_done == OnDoneActions.WAIT:
+                    self.current_action = RobotActions.IDLE
                     old_time = time.time()
                     while time.time()-old_time < self.new_command_timeout:
                         # Нам отдали команду о продолжении движения по точкам
@@ -306,7 +328,30 @@ class RobotAdvencedMovement:
                     # Если текущее действие - не хождение по точкам, то выходим из цикла
                     if self.current_action != RobotActions.MOVING_TO_POINT:
                         break
+                elif self.on_done == OnDoneActions.LOOK:
+                    self.current_action == RobotActions.MOVING_TO_POINT
+                    x, y, angle = self.get_pos_rot()
+                    desired_angle = -get_angle((x,y), self.on_done_look_at)
+                    delta_angle = get_shortest_angle_path(angle, desired_angle)
+                    while abs(delta_angle) > self.eps_angles:
+                        # Get data
+                        x, y, angle = self.get_pos_rot()
+                        desired_angle = -get_angle((x,y), self.on_done_look_at)
+                        delta_angle = get_shortest_angle_path(angle, desired_angle)
+                        #!!! print(delta_angle)
+                        # Use regulators
+                        yaw_rate = delta_angle / self.tau_fast
+                        yaw_rate = min_sgn(yaw_rate, self.max_angle_speed)
+                        # Apply
+                        self.set_speeds(0, yaw_rate)
+                        self.tr.sleep()
+                    self.set_speeds(0, 0)
+                    self.current_action = RobotActions.IDLE
                 else:
+                    if not self.current_action == RobotActions.MOVING_TO_POINT:
+                        self.current_action = RobotActions.IDLE
+                    print('I AM STOPPED')
+                    self.set_speeds(0, 0)
                     break
                     
                         

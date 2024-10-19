@@ -1,5 +1,6 @@
 from simulator.SC_sim import *
 import threading
+import random
 
 def init_clients():
     sim_th = threading.Thread(target=main)
@@ -10,10 +11,11 @@ def init_clients():
 #     return IR_G, IR_R, IR_B, ULTRASONIC
 
 class RobotDirection:
-    def __init__(self):
+    def __init__(self, std=20):
         self.left_cms = 0
         self.right_cms = 0
         self.max_speed = 36
+        self.std = std
     
     def set_speed_cms_left(self, speed):
         self.left_cms = speed
@@ -27,7 +29,7 @@ class RobotDirection:
         # global tank
         tank = get_tank()
         if tank is not None:
-            tank.set_speeds(self.left_cms, self.right_cms)
+            tank.set_speeds(self.left_cms+random.uniform(-self.std,self.std), self.right_cms+random.uniform(-self.std,self.std))
 
 global rb
 rb = RobotDirection()

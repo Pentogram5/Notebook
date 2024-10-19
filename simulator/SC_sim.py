@@ -74,6 +74,9 @@ def draw_line(screen, p1, p2, off_x, off_y, s, color=(255, 0, 0)):
     v2 = mul(s, add(p2, (off_x, off_y)))
     pygame.draw.line(screen, color, v1, v2, 2)
 
+global line_ps
+line_ps = ((0,0),(0,0))
+
 def draw_line1(p1, p2):
     global line_ps
     line_ps = (p1, p2)
