@@ -1,7 +1,8 @@
 from advanced_camera.SC_detectors import *
 from advanced_camera.test_mod import get_img_and_res
 
-tch = TopCameraHandler(0, framework=CamFrameWorks.testFiles, fake_img_update_period=0.5, use_undist=False)
+
+tch = TopCameraHandler(0, framework=CamFrameWorks.testFiles, fake_img_update_period=2, use_undist=False)
 # while True:
 #     # print(tch.results, tch.timestamp)
 #     ...
@@ -26,8 +27,9 @@ while tch.isOpened():
     results, timestamp = tch.get_results()
     if results is not None:
         frame, vec = get_img_and_res(frame, results)
-        print(vec)
+        # print(vec)
     
+    print(tch._get_our_raw_rotation)
     
     cv2.imshow('Video Stream', frame)
     #cv2.imshow('Video Stream', frame)
