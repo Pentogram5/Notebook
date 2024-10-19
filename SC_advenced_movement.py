@@ -1,4 +1,4 @@
-from SC_API_tcp import *
+from SC_API_sim import *
 import math as m
 from SC_utils import *
 
@@ -204,11 +204,11 @@ class RobotAdvencedMovement:
             rms = v - dv/2
         else:
             if v>0:
-                v_res -= dv
+                v_res -= abs(dv)/2
                 lms = v + min(0, dv)
                 rms = v + min(0, -dv)
             else:
-                v_res += dv
+                v_res += abs(dv)/2
                 lms = v - min(0, -dv)
                 rms = v - min(0, dv)
         
@@ -351,7 +351,7 @@ def main_test_wasd():
             perform_action_capture()
 
         # Устанавливаем скорости моторов
-        ram.set_speeds(v, w)
+        ram.set_speeds_propper(v, w)
 
     # Основной цикл управления
     try:
