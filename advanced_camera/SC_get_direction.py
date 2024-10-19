@@ -9,7 +9,7 @@ def calculate_slope(line):
 
     return round(math.atan((y2 - y1) / (x2 - x1)) * 180 / math.pi)
 
-def get_direction(frame, results):
+def get_direction(frame, results, margin=(10,10,10,10)):
     robots = []
     accs = []
     for result in results:
@@ -36,10 +36,10 @@ def get_direction(frame, results):
         if ind >= 2:
             break
         ind += 1
-        x1 = robot[0]
-        y1 = robot[1]
-        x2 = robot[2]
-        y2 = robot[3]
+        x1 = robot[0] + margin[0]
+        y1 = robot[1] + margin[1]
+        x2 = robot[2] - margin[2]
+        y2 = robot[3] - margin[3]
 
         src1 = frame[y1:y2, x1:x2]
         gray = cv2.cvtColor(src1, cv2.COLOR_BGR2GRAY)
