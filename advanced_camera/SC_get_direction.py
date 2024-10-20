@@ -84,7 +84,7 @@ def get_direction(frame, results, margin=(10,10,10,10)):
             res.append([from_to, x1, y1])
     return res
 
-def get_direction_for_one(frame, robot_pos, margin=(10, 10, 10, 10)):
+def get_direction_for_one(frame, robot_pos, margin=(0, 0, 0, 0)):
         x1 = robot_pos[0] + margin[0]
         y1 = robot_pos[1] + margin[1]
         x2 = robot_pos[2] - margin[2]

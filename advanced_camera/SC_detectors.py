@@ -1,5 +1,7 @@
 import cv2
 
+from .SC_get_direction import *
+
 from .SC_undist import undistort_img3
 from .SC_gst import *
 # https://github.com/ultralytics/ultralytics/issues/518
@@ -240,7 +242,7 @@ class TopCameraHandler:
         # - timestamp с которого их получили
         ts = self.timestamp_yolo
 
-        robot_pos = get_our_robot_pos_3(self.frame, self.results)
+        robot_pos = get_our_robot_pos_3(self.frame, self.results, self.robot_color)
         x1, y1, x2, y2 = robot_pos
         if x1 == np.NAN:
             return None, None, ts
@@ -259,7 +261,9 @@ class TopCameraHandler:
         angle_deg = None
 
         robot_pos = get_our_robot_pos_3(self.frame, self.results, self.robot_color)
-        robot_dir, _, _ = get_direction_for_one(self.frame, self.robot_pos, (0, 0, 0, 0))
+        robot_dir = (0,0,1,1)
+        if robot_pos:
+            robot_dir, _, _ = get_direction_for_one(self.frame, robot_pos, (0, 0, 0, 0))
         x1, y1, x2, y2 = robot_dir
 
         angle_rad = math.atan2(y2 - y1, x2 - x1)
@@ -268,11 +272,3 @@ class TopCameraHandler:
         # Корректируем угол
         angle_deg = (angle_deg + 180) % 360
         return angle_deg
-
-        angle_rad = math.atan2(y2 - y1, x2 - x1)
-    # Преобразуем радианы в градусы
-        angle_deg = math.degrees(angle_rad)
-    # Корректируем угол
-        angle_deg = (angle_deg + 90) % 360
-        return angle_deg
-    

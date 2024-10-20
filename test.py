@@ -29,7 +29,7 @@ while tch.isOpened():
         frame, vec = get_img_and_res(frame, results)
         # print(vec)
     
-    print(tch._get_our_raw_rotation)
+    print(tch.get_our_raw_position())
     
     cv2.imshow('Video Stream', frame)
     #cv2.imshow('Video Stream', frame)
