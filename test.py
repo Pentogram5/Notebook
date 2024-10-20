@@ -2,7 +2,7 @@ from advanced_camera.SC_detectors import *
 from advanced_camera.test_mod import get_img_and_res
 
 
-tch = TopCameraHandler(0, framework=CamFrameWorks.testFiles, fake_img_update_period=2, use_undist=False)
+tch = TopCameraHandler(0, framework=CamFrameWorks.cv2, fake_img_update_period=2, use_undist=True)
 # while True:
 #     # print(tch.results, tch.timestamp)
 #     ...

@@ -80,7 +80,7 @@ def get_direction(frame, results, margin=(0,0,0,0)):
         if len(max_line) > 0:
             from_to = find_line_direction([0, 0, x2 - x1, y2 - y1], max_line, src1)
             #from_to = max_line
-            print(from_to)
+            # print(from_to)
             res.append([from_to, x1, y1])
     return res
 
@@ -129,7 +129,7 @@ def get_direction_for_one(frame, robot_pos, margin=(0, 0, 0, 0)):
         if len(max_line) > 0:
             from_to = find_line_direction([0, 0, x2 - x1, y2 - y1], max_line, src1)
             #from_to = max_line
-            print(from_to)
+            # print(from_to)
             return [from_to, x1, y1]
         return [[np.NAN, np.NAN, np.NAN, np.NAN], x1, x2]
 
@@ -242,7 +242,7 @@ def get_our_robot_pos_2(frame, results):
         b, g, r = cv2.split(masked_image)
         g_mean = np.mean(g)
         r_mean = np.mean(r)
-        print(g_mean, r_mean)
+        # print(g_mean, r_mean)
         if g_mean > r_mean:
             clrs.append(['green', robot, r_mean - g_mean])
         else:
@@ -308,7 +308,7 @@ def get_our_robot_pos_3(frame, results, col):
         b, g, r = cv2.split(masked_image)
         g_mean = np.mean(g)
         r_mean = np.mean(r)
-        print(g_mean, r_mean)
+        # print(g_mean, r_mean)
         if g_mean > r_mean:
             clrs.append(['green', robot, r_mean - g_mean])
         else:
@@ -388,8 +388,8 @@ def find_barriers(frame, results):
     sort_inds = np.argsort(res)
     ans[sort_inds[0]] = 1
     ans[sort_inds[1]] = 1
-    print(res)
-    print(ans)
+    # print(res)
+    # print(ans)
     return ans
 
 
