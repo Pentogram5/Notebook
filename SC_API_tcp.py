@@ -68,7 +68,7 @@ class _Sensors:
         return ir_b
     @property
     def ULTRASONIC(self):
-        global ir_g, ir_r, ir_b, ultrasonic
+        global ir_g, ir_r, ir_b, ulrasonic
         return ultrasonic
 
 Sensors = _Sensors()

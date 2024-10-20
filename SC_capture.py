@@ -1,6 +1,6 @@
 from SC_advenced_movement import ram
 from SC_API_tcp import *
-from SC_API_tcp import perform_action_capture
+from SC_API_tcp import perform_action_capture, perform_action_throw_to_basket
 
 from pid import PID
 
@@ -34,7 +34,7 @@ def center(obj_class, results):
         return None, None, max_conf
 
 
-def getXofObject():
+def getXofObject(obj_class):
     ret, frame = cap.read()
     #gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     #out.write(frame)
@@ -59,7 +59,7 @@ def getXofObject():
     #cv2.imshow('gray feed', gray)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         return
-    xc, yc, conf = center('cube', res)
+    xc, yc, conf = center(obj_class, res)
     # print(xc, yc)
     return xc, conf
 
@@ -115,11 +115,11 @@ class Grabber:
         return 'Current state: ' + self.states[self.currentState]
 
     
-    def search(self):
-        A = Average(10)
+    def search(self, objClass):
+        A = Average(5)
         beginTime = time.time()
         while time.time() - beginTime < 30:
-            _, conf = getXofObject()
+            _, conf = getXofObject(objClass)
             averageConf = A(conf)
             print('search', averageConf)
             if averageConf < 0.4:
@@ -130,13 +130,13 @@ class Grabber:
                 return True
         return False
     
-    def aim(self):
+    def aim(self, objClass):
         A = Average(10)
         pid = self.pids[1]
         count = 0
         beginTime = time.time()
         while time.time() - beginTime < 30:
-            x, _ = getXofObject()
+            x, _ = getXofObject(objClass)
             if x:
                 count = 20
                 w = pid(x)
@@ -153,18 +153,60 @@ class Grabber:
         self.stop()
         return False
 
-    def sneak(self):
+    def sneakCube(self, objClass):
         pid = self.pids[2]
         count = 20
         beginTime = time.time()
         while time.time() - beginTime < 30:
-            x, conf = getXofObject()
+            x, conf = getXofObject(objClass)
             if x:
                 w = pid(x)
                 self.ram.set_speeds(6, w)
-                print('sneak', x, w)
+                print('sneak Cube', x, w)
                 print(Sensors.IR_R.filteredValue)
                 if Sensors.IR_R.filteredValue < 0.2:
+                    self.stop()
+                    return True
+            elif count > 0:
+                count -= 1
+            else:
+                break
+        self.stop()
+        return False
+    
+    def sneakSphere(self, objClass):
+        pid = self.pids[2]
+        count = 20
+        beginTime = time.time()
+        while time.time() - beginTime < 30:
+            x, conf = getXofObject(objClass)
+            if x:
+                w = pid(x)
+                self.ram.set_speeds(6, w)
+                print('sneak Cube', x, w)
+                print(Sensors.IR_R.filteredValue)
+                if Sensors.IR_R.filteredValue < 0.2:
+                    self.stop()
+                    return True
+            elif count > 0:
+                count -= 1
+            else:
+                break
+        self.stop()
+        return False
+    
+    def sneakBasket(self, objClass):
+        pid = self.pids[2]
+        count = 20
+        beginTime = time.time()
+        while time.time() - beginTime < 30:
+            x, conf = getXofObject(objClass)
+            if x:
+                w = pid(x)
+                self.ram.set_speeds(6, w)
+                print('sneak Base', x, w)
+                print(Sensors.ULTRASONIC.rawValue)
+                if Sensors.ULTRASONIC.rawValue < 14:
                     self.stop()
                     return True
             elif count > 0:
@@ -176,40 +218,74 @@ class Grabber:
         
     def capture(self):
         perform_action_capture()
+        self.stop()
         return True
     
-    def mainProcess(self):
+    def put(self):
+        perform_action_throw_to_basket()
+        self.stop()
+        return True
+    
+    def mainProcess(self, objClass):
         result = True
 
         if result:
+            getXofObject(objClass)
+            getXofObject(objClass)
+            getXofObject(objClass)
             self.currentState = 1
             print(self.getCurrentState())
-            result = self.search()
+            result = self.search(objClass)
 
         if result:
+            getXofObject(objClass)
+            getXofObject(objClass)
+            getXofObject(objClass)
             self.currentState = 2
             print(self.getCurrentState())
-            result = self.aim()
+            result = self.aim(objClass)
         
         if result:
+            getXofObject(objClass)
+            getXofObject(objClass)
+            getXofObject(objClass)
             self.currentState = 3
             print(self.getCurrentState())
-            result = self.sneak()
+            if objClass == 'cube':
+                result = self.sneakCube(objClass)
+            elif objClass == 'sphere':
+                result = self.sneakSphere(objClass)
+            elif objClass == 'basket':
+                result = self.sneakBasket(objClass)
+            else:
+                result = False
         
         if result:
+            getXofObject(objClass)
+            getXofObject(objClass)
+            getXofObject(objClass)
             self.currentState = 4
             print(self.getCurrentState())
-            result = self.capture()
+            if objClass in ['cube', 'sphere']:
+                result = self.capture()
+            else:
+                result = self.put()
+
         
-        if result:
-            self.currentState = 5
-            print(self.getCurrentState())
-            result = not self.sneak()
+        # if result:
+        #     getXofObject(objClass)
+        #     getXofObject(objClass)
+        #     getXofObject(objClass)
+        #     self.currentState = 5
+        #     print(self.getCurrentState())
+        #     result = not self.sneak()
         
         if not result:
             self.currentState = 6
             print(self.getCurrentState())
         
+        self.stop()
+
         return result
     
     def stop(self):
