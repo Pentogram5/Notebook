@@ -111,3 +111,37 @@ def map_system_zero(results, h, w):
                     y_min = y1
 
     return int(x_min), int(y_min)
+
+
+def sm2pix_point(koeffs, point):
+    # Из см в пиксели
+    x, y = point
+    koef1, koef2, x_min, y_min = koeffs
+    res = [round(x / koef1 + x_min), round(y / koef2 + y_min)]
+
+    return res
+
+def sm2pix_point_arr(koeffs, arr):
+    # Из см в пиксели (массив)
+    # koef1, koef2, x_min, y_min = koeffs
+    ans = []
+    for point in arr:
+        ans.append(sm2pix_point(koeffs, point))
+
+    return ans
+
+
+def show_sm_point(frame, koeffs, point):
+   x_c, y_c = sm2pix_point(koeffs, point)
+   cv2.circle(frame, (x_c, y_c), 3, (0, 255, 255), 3)
+
+   return frame
+
+
+def show_sm_line(frame, koeffs, point1, point2):
+    point1, point2 = sm2pix_point_arr(koeffs, (point1, point2))
+    x1, y1 = point1
+    x2, y2 = point2
+    cv2.line(frame, (x1, y1), (x2, y2), (0, 255, 255), 3)
+
+    return frame
