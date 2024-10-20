@@ -316,9 +316,11 @@ def get_our_robot_pos_3(frame, results, col):
 
     if len(robots) == 0:
         return None
-    elif len(robots) == 1:
+    
+    if len(robots) == 1:
         if clrs[0][0] == col:
             return clrs[0][1]
+        return None
 
     clr1 = clrs[0]
     clr2 = clrs[1]

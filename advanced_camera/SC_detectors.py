@@ -244,7 +244,7 @@ class TopCameraHandler:
         angle_deg = None
 
         robot_pos = get_our_robot_pos_3(self.frame, self.results, self.robot_color)
-        robot_dir, _, _ = get_direction_for_one(frame, robot_pos, (0, 0, 0, 0))
+        robot_dir, _, _ = get_direction_for_one(self.frame, self.robot_pos, (0, 0, 0, 0))
         x1, y1, x2, y2 = robot_dir
 
         angle_rad = math.atan2(y2 - y1, x2 - x1)
