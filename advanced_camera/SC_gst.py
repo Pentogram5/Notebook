@@ -2,6 +2,7 @@ import os
 import threading
 import time
 import cv2
+from SC_get_direction import *
 # from wincam import DXCamera  # Importing the new camera module
 import bettercam
 from .windowsing import *

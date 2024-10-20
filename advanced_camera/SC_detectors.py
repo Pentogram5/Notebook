@@ -13,6 +13,7 @@ from ultralytics import YOLO
 import sys
 sys.path.append("..")
 from SC_utils import *
+from .SC_CS import *
 import time
 import glob
 
@@ -21,6 +22,10 @@ class CamFrameWorks:
     gst = 1
     testCam = 2
     testFiles = 3
+
+class RobotColors:
+    RED = 0
+    GREEN = 1
 
 class FileCamera:
     def __init__(self, folder='./new9/*', T=5):
@@ -62,7 +67,8 @@ class TopCameraHandler:
     # Handles actions of top camera
     cam1_url = "rtsp://Admin:rtf123@192.168.2.250/251:554/1/1"
     cam2_url = "rtsp://Admin:rtf123@192.168.2.251/251:554/1/1"
-    def __init__(self, cam, framework=CamFrameWorks.cv2, fps_cam=30, fps_yolo=30, use_undist=True, fake_img_update_period=5):
+    def __init__(self, cam, framework=CamFrameWorks.cv2, fps_cam=30, fps_yolo=30, use_undist=True, fake_img_update_period=5,
+                 robot_color=RobotColors.GREEN):
         self.framework = framework
         if   framework==CamFrameWorks.cv2:
             if cam==0:
@@ -84,6 +90,8 @@ class TopCameraHandler:
         while not ret:
             ret, self.frame = self.cam.read()
         
+        self.robot_color = robot_color
+
         #!!!
         self.results = None
         self.tr_cam  = ThreadRate(fps_cam )
@@ -195,15 +203,36 @@ class TopCameraHandler:
         # Возвращает словарь
         # - ключи    - имена классов
         # - значения - расположение на карте в сантиметрах
-        ...
+        obj_dict = {}
+        
+        for result in self.results:
+            boxes = result.boxes
+            for box in boxes:
+                x1, y1, x2, y2 = map(int, box.xyxy.flatten().cpu().numpy())  # Convert to integers
+                # score = box.conf.item()  # confidence score
+                cls = result.names[box.cls.int().item()]  # cls name
+                if cls not in obj_dict.keys():
+                    obj_dict[cls] = []
+                obj_dict[cls].append([x1, y1, x2, y2])
+        return obj_dict
+
+
+
     
     def get_our_raw_position(self):
         # Возвращает
         # - позицию нашего робота в см на основании CV
         # - timestamp с которого их получили
         ts = self.timestamp_yolo
-        x, y = None, None
-        return x, y, ts
+
+        robot_pos = get_our_robot_pos_3(self.frame, self.results)
+        x1, y1, x2, y2 = robot_pos
+        if x1 == np.NAN:
+            return None, None, ts
+
+        x, y = to_map_system(get_koeffs(self.results), (x2 - x1), (y2 - y1))
+        return np.array([x, y]), ts
+
 
     def _get_our_raw_rotation(self):
         # Возвращает
@@ -211,6 +240,24 @@ class TopCameraHandler:
         # - timestamp с которых их получили
         # 0  градусов соответствует +Ox
         # 90 градусов соответствует +Oy
-        ts = self.timestamp_yolo
-        yaw = None
-        return yaw, ts
+        # ts = self.timestamp_yolo
+        angle_deg = None
+
+        robot_pos = get_our_robot_pos_3(self.frame, self.results, self.robot_color)
+        robot_dir, _, _ = get_direction_for_one(frame, robot_pos, (0, 0, 0, 0))
+        x1, y1, x2, y2 = robot_dir
+
+        angle_rad = math.atan2(y2 - y1, x2 - x1)
+        # Преобразуем радианы в градусы
+        angle_deg = math.degrees(angle_rad)
+        # Корректируем угол
+        angle_deg = (angle_deg + 180) % 360
+        return angle_deg
+
+        angle_rad = math.atan2(y2 - y1, x2 - x1)
+    # Преобразуем радианы в градусы
+        angle_deg = math.degrees(angle_rad)
+    # Корректируем угол
+        angle_deg = (angle_deg + 90) % 360
+        return angle_deg
+    
