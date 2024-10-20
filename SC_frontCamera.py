@@ -6,16 +6,14 @@ import cv2
 from ultralytics import YOLO
 import numpy as np
 
-import requests
 
 class WebCamera:
     def __init__(self, max_fps=30):
         self.frame = None
         self.res = None
         self.th = None
-        self.url = 'http://192.168.2.12:8080/?action=stream'
         # ЗДЕСЬ ИНИЦИАЛИЗИРУЙ КАМЕРУ
-        # self.cam = cv2.VideoCapture(self.url)
+        self.cam = cv2.VideoCapture('http://192.168.2.12:8080/?action=stream')
         self.model = YOLO('yolo_for_camera_robot.pt')
         self.tr = ThreadRate(max_fps)
     
@@ -23,14 +21,14 @@ class WebCamera:
         self.th = threading.Thread(target=self._start_capturing_image)
         self.th.start()
     
-    # def read_image(self):
-    #     # СЮДА ПИШИ СВОЙ КОД ПО ПОЛУЧЕНИЮ КАРТИНКИ
-    #     ret, frame = self.cam.read()
-    #     if not ret:
-    #         return False, None
-    #     frame = cv2.rotate(frame, cv2.ROTATE_180)
-    #     self.res = self.model(frame)
-    #     return frame, self.res
+    def read_image(self):
+        # СЮДА ПИШИ СВОЙ КОД ПО ПОЛУЧЕНИЮ КАРТИНКИ
+        ret, frame = self.cam.read()
+        if not ret:
+            return False, None
+        frame = cv2.rotate(frame, cv2.ROTATE_180)
+        self.res = self.model(frame)
+        return frame, self.res
 
     def show_image(self, frame, res):
         if not res:
@@ -55,25 +53,11 @@ class WebCamera:
 
         
     def _start_capturing_image(self):
-        stream = requests.get(self.url, stream=True)
-        # while True:
-        if stream.status_code == 200:
-            bts = bytes()
-            for chunk in stream.iter_content(chunk_size=1024):
-                bts += chunk
-                a = bts.find(b'\xff\xd8')
-                b = bts.find(b'\xff\xd8')
-                # self.frame, self.res = self.read_image()
-                # Начало и конец изображения
-                if a != -1 and b != -1:
-                    jpg = bts[a:b+2]
-                    bts = bts[b+2:]
-                    self.frame = cv2.imdecode(np.frombuffer(jpg, dtype=np.uint8), cv2.IMREAD_COLOR)
-                    self.show_image(self.frame, self.res)
-                    print(self.frame)
-                    bts = bytes()
+        while True:
+            self.frame, self.res = self.read_image()
+            self.show_image(self.frame, self.res)
 
-                self.tr.sleep()
+            self.tr.sleep()
     
     def read(self):
         return self.frame is not None, self.frame
@@ -105,4 +89,3 @@ class WebCamera:
         obj.start_capturing_image()
         return obj
 
-WebCamera.VideoCapture()
