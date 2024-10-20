@@ -79,6 +79,7 @@ class Integrator:
             #     if type(dx)==np.ndarray:
             #         print(old_time-last_true_sample_time, last_true_sample_time, len(self.fifo_dS_data))
             while old_time<last_true_sample_time:
+                # print(time.time()-old_time,old_time-last_true_sample_time)
                 # Вычитаем старые данные
                 dx  = self.fifo_dS_data[0][0]
                 del self.fifo_dS_data[0]
@@ -98,6 +99,7 @@ class Integrator:
                 # if Integrator.is_zero_differantial(dx):
                 #     self.zero_streak_count = max(self.zero_streak_count-1,0)
             if update_fl:
+                # print('od, ltst', type(self.S), old_time, last_true_sample_time)
                 self.S -= delta_S
         self.clear_if_zero()
     
@@ -278,8 +280,13 @@ class INS:
         # real_yaw = predicted_yaw*self.P_of_yaw_predict + measured_yaw*(1-self.P_of_yaw_predict)
         real_yaw = measured_yaw
         
+        # print('measured_time', measured_time)
         # Update position
         self.last_yaw_update_time = measured_time
+        # try:
+        #     print('times',time.time()-self.yaw_integrator.fifo_dS_data[-5][1], self.yaw_integrator.fifo_dS_data[-5][1]-self.last_yaw_update_time, )
+        # except:
+        #     pass
         self.yaw_integrator.clear_old_data(self.last_yaw_update_time)
         self._yaw = real_yaw
         

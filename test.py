@@ -63,7 +63,7 @@ ins.start_updater()
 print('NIGGER')
 while True:
         
-    ret, frame = tch.read_yolo()
+    ret, frame_in = tch.read_yolo()
     # print('NIGGERS', frame)
     if not ret:
         continue
@@ -77,15 +77,17 @@ while True:
     #     tch.pause_yolo()
     # # print(tch.get_results())
     # print(phase4, tch.is_yolo_running, tch.timestamp_yolo)
+    
     results, timestamp = tch.get_results()
     if results is not None:
-        frame, vec = get_img_and_res(frame, results)
+        frame, vec = get_img_and_res(frame_in.copy(), results)
         # print(vec)
     
+    # ram.w = 10
     
     # update_speeds()
     # ram.set_speeds(20, 20)
-    print(ins.get_pos())
+    print(ins.get_pos(), ins.get_yaw()) # ins.yaw_integrator.S, len(ins.yaw_integrator.fifo_dS_data)
     res = get_our_robot_pos_3(frame, results, 'red')
     if res != None:
         x1, y1, x2, y2 = res
