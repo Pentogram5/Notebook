@@ -49,7 +49,8 @@ class FileCamera:
             self.index = (self.index + 1) % len(self.imgs)
             self.last_time = t
         return True, self.imgs[self.index]
-
+# trtrtrttttyyyy.mp4
+# trtrtrt.mp4
 class VideoCamera:
     def __init__(self, path="./new9/trtrtrttttyyyy.mp4"):
         # Инициализация видеокамеры
@@ -156,13 +157,22 @@ class TopCameraHandler:
             get_measured_pos=self.get_position_with_ts_correction,
             get_measured_yaw=self.get_yaw_with_ts_correction
             )
+        
+        self.last_pos_update_ts = 0
+        self.last_yaw_update_ts = 0
+        
+        self.koefs = [1, 1, 0, 0]
     
     def get_position_with_ts_correction(self):
         pos, ts = self.get_our_raw_position()
+        while ts<=self.last_pos_update_ts:
+            pos, ts = self.get_our_raw_position()
         return pos, ts-self.stable_delay
         
     def get_yaw_with_ts_correction(self):
         yaw, ts = self._get_our_raw_rotation()
+        while ts<=self.last_yaw_update_ts:
+            pos, ts = self._get_our_raw_rotation()
         return yaw, ts-self.stable_delay
     
     def continue_yolo(self):
@@ -205,7 +215,7 @@ class TopCameraHandler:
             ret, frame = self.cam.read()
             if ret:
                 self.last_timestamp_cam = self.timestamp_cam
-                self.timestamp_cam      = time.time_ns()
+                self.timestamp_cam      = time.time()
                 ts.timestamp()
                 if self.use_undist:
                     frame = undistort_img3(frame)
@@ -233,7 +243,7 @@ class TopCameraHandler:
         self.ts_inference.timestamp()
         res = model.predict(frame, verbose=False)
         # Сохранение времени последнего поступившего кадра
-        self.timestamp_yolo = time.time_ns() 
+        self.timestamp_yolo = time.time() 
         
         self.inference_yolo = self.ts_inference.timestamp()
         self.last_processed_frame = frame
@@ -241,6 +251,7 @@ class TopCameraHandler:
         
         # Запись результатов
         self.results = res
+        self.koefs = get_koeffs(self.results)
         
         # Сохранение времени последнего обработанного изображения, чтобы проверить на изменения в изображении
         self.last_timestamp_yolo = self.timestamp_yolo
@@ -289,15 +300,25 @@ class TopCameraHandler:
         # - позицию нашего робота в см на основании CV
         # - timestamp с которого их получили
         ts = self.timestamp_yolo
+        try:
 
-        robot_pos = get_our_robot_pos_4(self.frame, self.results, self.robot_color)
-        if robot_pos == None:
-            return None,None, ts
+            robot_pos = get_our_robot_pos_4(self.frame, self.results, self.robot_color)
+            if robot_pos is None:
+                return None, ts
 
-        x1, y1, x2, y2 = robot_pos
+            x1, y1, x2, y2 = robot_pos
 
-        x, y = to_map_system(get_koeffs(self.results), (x2 + x1) // 2, (y2 + y1) // 2)
-        return np.array([x, y]), ts
+            px_px, py_px = (x2 + x1) // 2, (y2 + y1) // 2
+            self.koefs = get_koeffs(self.results)
+            x, y = to_map_system(get_koeffs(self.results), px_px, py_px)
+            # NW_SW_NE=get_NW_SW_NE(self.results)
+            # # print(px_px, py_px, NW_SW_NE)
+            # x, y = from_px_to_cm((px_px, py_px), NW_SW_NE=NW_SW_NE)
+            return np.array([x, y]), ts
+        except Exception as ex:
+            # print('get_our_raw_position exception', ex)
+            time.sleep(0.1)
+            return None, ts
 
 
     def _get_our_raw_rotation(self):
@@ -309,17 +330,19 @@ class TopCameraHandler:
         # ts = self.timestamp_yolo
         angle_deg = None
 
-        robot_pos = get_our_robot_pos_4(self.frame, self.results, self.robot_color)
-        if robot_pos == None:
-            return None
-        robot_dir = (0,0,1,1)
-        if robot_pos:
+        ts = self.timestamp_yolo
+        try:
+            robot_pos = get_our_robot_pos_4(self.frame, self.results, self.robot_color)
             robot_dir, _, _ = get_direction_for_one(self.frame, robot_pos, (0, 0, 0, 0))
-        x1, y1, x2, y2 = robot_dir
+            x1, y1, x2, y2 = robot_dir
 
-        angle_rad = math.atan2(y2 - y1, x2 - x1)
-        # Преобразуем радианы в градусы
-        angle_deg = math.degrees(angle_rad)
-        # Корректируем угол
-        angle_deg = (angle_deg + 180) % 360
-        return angle_deg
+            # angle_rad = math.atan2(y2 - y1, x2 - x1)
+            # # Преобразуем радианы в градусы
+            # # Корректируем угол
+            # angle_deg = (angle_deg + 180) % 360
+            angle_deg = get_angle((x1,y1), (x2,y2))
+            return angle_deg, ts
+        except Exception as ex:
+            # print('_get_our_raw_rotation exception', ex)
+            time.sleep(0.1)
+            return None, ts

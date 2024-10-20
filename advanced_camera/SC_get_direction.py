@@ -131,7 +131,8 @@ def get_direction_for_one(frame, robot_pos, margin=(0, 0, 0, 0)):
             #from_to = max_line
             # print(from_to)
             return [from_to, x1, y1]
-        return [[np.NAN, np.NAN, np.NAN, np.NAN], x1, x2]
+        return None
+        # return [[np.nan, np.nan, np.nan, np.nan], x1, x2]
 
 
 def find_line_direction(robot, max_line, src):
@@ -147,7 +148,7 @@ def find_line_direction(robot, max_line, src):
     rows, cols = v.shape
     i_ind, j_ind = np.indices((rows, cols))
 
-    mask = check_point(perp_vec, center_point, [i_ind, j_ind])
+    mask = check_point(perp_vec, center_point, [j_ind, i_ind])
 
     side1 = np.mean(v, where=mask)
     mask2 = np.bitwise_not(mask)
@@ -157,10 +158,13 @@ def find_line_direction(robot, max_line, src):
     new_y = center_point[1] + (ly2 - ly1)
     flag = check_point(perp_vec, center_point, [new_x, new_y])
 
-    if (flag and side1 > side2) or ((not flag) and side2 < side1):
-        return [center_point[0], center_point[1], new_x, new_y]
-
-    return [new_x, new_y, center_point[0], center_point[1]]
+    dx = new_x - center_point[0]
+    dy = new_y - center_point[1]
+    # if (flag and side1 > side2) or ((not flag) and side2 < side1):
+    if side1 > side2:
+        return [center_point[0], center_point[1], center_point[0]+dx, center_point[1]+dy]
+    else:
+        return [center_point[0], center_point[1], center_point[0]-dx, center_point[1]-dy]
 
 
 def check_point(vec, center_point, point):
