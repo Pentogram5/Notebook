@@ -24,6 +24,7 @@ class CamFrameWorks:
     gst = 1
     testCam = 2
     testFiles = 3
+    testVideo = 4
 
 class RobotColors:
     RED = 0
@@ -48,6 +49,29 @@ class FileCamera:
             self.index = (self.index + 1) % len(self.imgs)
             self.last_time = t
         return True, self.imgs[self.index]
+
+class VideoCamera:
+    def __init__(self, path="./new9/trtrtrttttyyyy.mp4"):
+        # Инициализация видеокамеры
+        self.video = cv2.VideoCapture(path)
+        if not self.video.isOpened():
+            raise ValueError(f"Не удалось открыть видеофайл: {path}")
+
+    def read(self):
+        # Чтение кадра из видео
+        ret, img = self.video.read()
+        if not ret:
+            # Если кадр не был прочитан, возвращаемся к началу видео
+            self.video.set(cv2.CAP_PROP_POS_FRAMES, 0)  # Сброс к первому кадру
+            ret, img = self.video.read()  # Пытаемся прочитать первый кадр снова
+        
+        return ret, img
+
+    def release(self):
+        # Освобождение ресурсов
+        self.video.release()
+
+
         
 
 # class LoopedCV2Camera:
@@ -87,6 +111,8 @@ class TopCameraHandler:
             # self.cam.set(cv2.CAP_PROP_POS_FRAMES, 0)
         elif framework==CamFrameWorks.testFiles:
             self.cam = FileCamera(T=fake_img_update_period)
+        elif framework==CamFrameWorks.testVideo:
+            self.cam = VideoCamera()
         self.frame, self.timestamp = None, 0
         self.last_processed_frame = None
         

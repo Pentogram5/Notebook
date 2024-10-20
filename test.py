@@ -4,7 +4,7 @@ from SC_API_tcp import *
 from SC_advenced_movement import ram
 
 
-tch = TopCameraHandler(0, framework=CamFrameWorks.gst, fake_img_update_period=2, use_undist=True)
+tch = TopCameraHandler(0, framework=CamFrameWorks.testVideo, fake_img_update_period=2, use_undist=True)
 # # while True:
 # #     # print(tch.results, tch.timestamp)
 # #     ...
