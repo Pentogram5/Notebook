@@ -136,6 +136,12 @@ def perform_action_capture():
 def perform_action_throw_to_basket():
     send_action("perform_action_throw_to_basket")
 
+def set_red_light():
+    send_action("set_red_light")
+    
+def set_green_light():
+    send_action("set_green_light")
+
 ts = TimeStamper()
 def main():
     init_clients()
