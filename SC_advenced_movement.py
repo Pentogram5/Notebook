@@ -184,6 +184,8 @@ class RobotAdvencedMovement:
         self.tr = ThreadRate(fps) # Частота обновления регулятора
         self.ts = TimeStamper()
         
+        self.tr_points = ThreadRate(fps)
+        
         # Параметры логики
         self.current_action = RobotActions.IDLE
         # Параметры хождения по точкам
@@ -194,6 +196,13 @@ class RobotAdvencedMovement:
         self.on_done_look_at = (0,0)  # Точка, в которую робот должен смотреть после прохождения маршрута. Работает только с OnDone.LOOK
         
         self.ins = ins
+        
+        self.on_done_points = None
+        self.on_done_look_at_after_points = None
+        self.v_points = None
+        self.points = None
+        
+        self.is_moving_by_points_fl = False
     
     # def set_speeds
     def get_pos_rot(self):
@@ -246,6 +255,37 @@ class RobotAdvencedMovement:
         
         self.ts = TimeStamper()
     
+    def move_by_points(self, points, v=None, on_done=OnDoneActions.STOP, look_at=None):
+        self.points = points
+        self.on_done_points = on_done
+        self.on_done_look_at_after_points = look_at
+        self.v_points = v
+        if not self.is_moving_by_points_fl:
+            self.is_moving_by_points_fl = True
+            self.th_points = threading.Thread(target=self._move_by_points)
+            self.th_points.start()
+        else:
+            self.points = points
+        
+    def _move_by_points(self):
+        # Движение с возможностью корректирвоки пути во время движения
+        while len(self.points)>0:
+            on_done = OnDoneActions.WAIT
+            look_at = None
+            if len(self.points)==1:
+                on_done = self.on_done_points
+                look_at = self.on_done_look_at_after_points
+            if self.current_point != self.points[0]:
+                self.move_to_point(self.points[0], v=self.v_points, on_done=on_done, look_at=look_at)
+            
+            if self.robot_done_moving():
+                del self.points[0]
+                # self.stop_moving_to_point()
+            self.tr_points.sleep()
+        self.is_moving_by_points_fl = False
+                
+            
+    
     def move_to_point(self, p, v=None, on_done=OnDoneActions.STOP, look_at=None):
         if v==None:
             v = self.max_speed
@@ -275,9 +315,9 @@ class RobotAdvencedMovement:
             self.current_action = RobotActions.IDLE
             return True
         
-    def is_auto_moving(self):
-        # Returns True if robot is still moving by autonomos movment
-        return self.current_action != RobotActions.IDLE
+    def robot_done_moving(self):
+        # Returns True if robot stoped auto moving
+        return self.current_action == RobotActions.IDLE
         
     
     def _movement_to_point(self):
@@ -311,6 +351,8 @@ class RobotAdvencedMovement:
             #!!! print(R, v, w, delta_angle)
             self.set_speeds(v, w)
             self.tr.sleep()
+            
+            # print(get_distance((x,y), self.current_point), self.current_point)
             
             # Принимаем решение о выходе из цикла
             if get_distance((x,y), self.current_point) <= self.R:

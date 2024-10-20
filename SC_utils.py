@@ -153,6 +153,10 @@ class MEAN(Filter):
         del self.fifo
         self.fifo = []
 
+class UpdateSourceModified:
+    def __init__(self, get_measured_pos=..., get_measured_yaw=...):
+        self.get_measured_pos = get_measured_pos
+        self.get_measured_yaw = get_measured_yaw
 
 # # Пример использования
 # angle1 = 90

@@ -437,48 +437,50 @@ def main_move_to_point_simulator():
         rb.set_speed_cms_right(0)
 
 
-# def main_move_to_point_simulator():
-#     import SC_API_sim
+def main_move_to_point_simulator():
+    import SC_API_sim
     
-#     # ram = SC_API_sim.ram
+    # ram = SC_API_sim.ram
 
-#     # Инициализация клиентов
-#     SC_API_sim.init_clients()
-#     IR_G, IR_R, IR_B, ULTRASONIC = get_constants()
+    # Инициализация клиентов
+    SC_API_sim.init_clients()
+    IR_G, IR_R, IR_B, ULTRASONIC = get_constants()
     
-#     tch = simulator.SC_sim.TopCameraHandler(controlled_delay=0.4, delay_std=0.25, pos_std=0.05, yaw_std=5)
-#     ins = INS(update_source=tch.update_sink, ram=ram, speed_update_rate=60)
-#     ins.start_updater()
+    tch = simulator.SC_sim.TopCameraHandler(controlled_delay=0.4, delay_std=0.25, pos_std=0.05, yaw_std=5)
+    ins = INS(update_source=tch.update_sink, ram=ram, speed_update_rate=60)
+    ins.start_updater()
     
-#     # Основной цикл управления
-#     try:
-#         while True:
-#             # IR_G, IR_R, IR_B, ULTRASONIC = get_constants()
-#             # print(Sensors.IR_G)
-#             del_pos = tch.delayed_p
-#             # del_yaw = tch.delayed_yaw
-#             draw_dote(del_pos)
-#             x, y = ins.get_pos()
-#             draw_dote2((x, y))
+    ram.move_by_points(points=[(0.5,1.5),(1.3,1.5),(1.3,2.3),(2.0,2.3),(2.0,2.7)])
+    # Основной цикл управления
+    try:
+        while True:
+            # IR_G, IR_R, IR_B, ULTRASONIC = get_constants()
+            # print(Sensors.IR_G)
+            del_pos = tch.delayed_p
+            # del_yaw = tch.delayed_yaw
+            draw_dote(del_pos)
+            x, y = ins.get_pos()
+            draw_dote2((x, y))
             
-#             draw_line1((x, y), add((x, y),get_unit_vector(ins.get_yaw())))
+            draw_line1((x, y), add((x, y),get_unit_vector(ins.get_yaw())))
             
-#             mouse_pos = get_click_position()
-#             if mouse_pos is not None:
-#                 p = mouse_pos
-#                 ram.move_to_point(p, look_at=(0,0), on_done=OnDoneActions.LOOK)
+            # time.sleep(2)
+            # mouse_pos = get_click_position()
+            # if mouse_pos is not None:
+            #     p = mouse_pos
+            #     ram.move_to_point(p, look_at=(0,0), on_done=OnDoneActions.LOOK)
             
-#             # print(ram.rb.left_cms, ram.rb.right_cms)
+            # print(ram.rb.left_cms, ram.rb.right_cms)
             
-#             # print(len(ins.pos_integrator.fifo_dS_data))
-#             # update_speeds()
-#             # print(IR_R)
-#             # print(get_our_position_rotation())
-#             time.sleep(0.03)
-#     except KeyboardInterrupt:
-#         # Остановка моторов при завершении программы
-#         rb.set_speed_cms_left(0)
-#         rb.set_speed_cms_right(0)
+            # print(len(ins.pos_integrator.fifo_dS_data))
+            # update_speeds()
+            # print(IR_R)
+            # print(get_our_position_rotation())
+            time.sleep(0.03)
+    except KeyboardInterrupt:
+        # Остановка моторов при завершении программы
+        rb.set_speed_cms_left(0)
+        rb.set_speed_cms_right(0)
     
 
 if __name__=='__main__':
