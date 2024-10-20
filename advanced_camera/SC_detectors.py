@@ -71,7 +71,8 @@ class TopCameraHandler:
     cam2_url = "rtsp://Admin:rtf123@192.168.2.251/251:554/1/1"
     def __init__(self, cam, framework=CamFrameWorks.cv2, fps_cam=30, fps_yolo=30, use_undist=True, fake_img_update_period=5,
                  robot_color=RobotColors.GREEN,
-                 stable_delay=0.3):
+                 stable_delay=0.3,
+                 camera_margin=(250,0,0,0)):
         self.framework = framework
         if   framework==CamFrameWorks.cv2:
             if cam==0:
@@ -89,9 +90,17 @@ class TopCameraHandler:
         self.frame, self.timestamp = None, 0
         self.last_processed_frame = None
         
+        
+        self.camera_margin = camera_margin
         ret = False
+        camera_margin = self.camera_margin
         while not ret:
-            ret, self.frame = self.cam.read()
+            ret, frame = self.cam.read()
+            h, w = frame.shape[:2]
+            x1, y1 = 0, 0
+            x2, y2 = w, h
+            x1,y1,x2,y2 = x1+camera_margin[0], y1+camera_margin[1], x2-camera_margin[0]-camera_margin[2], y2-camera_margin[1]-camera_margin[3]
+            self.frame = frame[y1:y2, x1:x2]
         
         self.robot_color = robot_color
 
@@ -174,8 +183,21 @@ class TopCameraHandler:
                 ts.timestamp()
                 if self.use_undist:
                     frame = undistort_img3(frame)
+                
+                # Делаем обрезание
+                camera_margin = self.camera_margin
+                h, w = frame.shape[:2]
+                x1, y1 = 0, 0
+                x2, y2 = w, h
+                x1,y1,x2,y2 = x1+camera_margin[0], y1+camera_margin[1], x2-camera_margin[0]-camera_margin[2], y2-camera_margin[1]-camera_margin[3]
+                
                 # print(ts.timestamp())
+                # print(x1,y1,x2,y2, frame.shape)
+                #[y1:y2, x1:x2]
+                # [y1:y2, x1:x2].copy()
+                frame = frame[y1:y2, x1:x2]
                 self.frame = frame
+                # print(self.frame.shape)
                 self.has_new_frame_to_process = True
             self.tr_cam.sleep()
     
