@@ -36,7 +36,7 @@ def get_koeffs(results):
             score = box.conf.item()  # Confidence score
             cls = result.names[box.cls.int().item()]
             x1, y1, x2, y2 = map(int, box.xyxy.flatten().cpu().numpy())
-            if cls == 'border':
+            if cls == 'labirint':
                 if x1 < x_min:
                     x_min = x1
                 if x2 > x_max:
@@ -46,8 +46,8 @@ def get_koeffs(results):
                 if y2 > y_max:
                     y_max = y2
 
-    WIDTH = 400
-    HEIGHT = 310
+    WIDTH = 201
+    HEIGHT = 210
     koef1 = WIDTH / (x_max - x_min)
     koef2 = HEIGHT / (y_max - y_min)
     # print(koef1, koef2)
@@ -76,7 +76,7 @@ def to_map_system(koeffs, x, y, sm = True):
     koef1, koef2, x_min, y_min = koeffs
 
     if sm:
-        return (x - x_min) * koef1, (y - y_min) * koef2
+        return (x - x_min) * koef1 + 95, (y - y_min) * koef2 + 45
 
     return x - x_min, y - y_min
 
@@ -87,7 +87,7 @@ def to_map_system_arr(koeffs, arr, sm = True):
     for point in arr:
         x, y = point
 
-        res.append([(x - x_min) * koef1, (y - y_min) * koef2])
+        res.append([round((x - x_min) * koef1) + 95, round((y - y_min) * koef2) + 45])
     
     return res
 
@@ -117,7 +117,7 @@ def sm2pix_point(koeffs, point):
     # Из см в пиксели
     x, y = point
     koef1, koef2, x_min, y_min = koeffs
-    res = [round(x / koef1 + x_min), round(y / koef2 + y_min)]
+    res = [round((x - 95) / koef1) + x_min, round((y - 45) / koef2) + y_min]
 
     return res
 

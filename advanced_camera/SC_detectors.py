@@ -70,7 +70,7 @@ class TopCameraHandler:
     cam1_url = "rtsp://Admin:rtf123@192.168.2.250/251:554/1/1"
     cam2_url = "rtsp://Admin:rtf123@192.168.2.251/251:554/1/1"
     def __init__(self, cam, framework=CamFrameWorks.cv2, fps_cam=30, fps_yolo=30, use_undist=True, fake_img_update_period=5,
-                 robot_color=RobotColors.GREEN,
+                 robot_color=RobotColors.RED,
                  stable_delay=0.3,
                  camera_margin=(250,0,0,0)):
         self.framework = framework
@@ -270,7 +270,7 @@ class TopCameraHandler:
 
         x1, y1, x2, y2 = robot_pos
 
-        x, y = to_map_system(get_koeffs(self.results), (x2 - x1), (y2 - y1))
+        x, y = to_map_system(get_koeffs(self.results), (x2 + x1) // 2, (y2 + y1) // 2)
         return np.array([x, y]), ts
 
 

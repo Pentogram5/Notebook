@@ -12,7 +12,7 @@ class GstCam:
     cam2 = 'rtsp://Admin:rtf123@192.168.2.251/251:554/1/1'
     command = 'gst-launch-1.0 rtspsrc location={} latency=0 ! decodebin ! autovideosink'
 
-    def __init__(self, w=1333, h=889, fps=60, margin=(20,50,20,20)):
+    def __init__(self, w=1391+250, h=934, fps=60, margin=(20,50,20,20)):
         # l,t,r,b
         self.win_name = "Direct3D11 renderer"
         self.camera = None
