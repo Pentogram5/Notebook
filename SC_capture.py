@@ -212,8 +212,8 @@ class Grabber:
             if x:
                 w = pid(x)
                 self.ram.set_speeds(6, w)
-                print('sneak Basket', x, w)
-                print(Sensors.ULTRASONIC.rawValue)
+                print('sneak Basket', x, w, Sensors.ULTRASONIC.filteredValue)
+                print(Sensors.ULTRASONIC.filteredValue)
                 if Sensors.ULTRASONIC.rawValue < 14:
                     self.stop()
                     return True
