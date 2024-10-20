@@ -62,7 +62,8 @@ class TopCameraHandler:
     # Handles actions of top camera
     cam1_url = "rtsp://Admin:rtf123@192.168.2.250/251:554/1/1"
     cam2_url = "rtsp://Admin:rtf123@192.168.2.251/251:554/1/1"
-    def __init__(self, cam, framework=CamFrameWorks.cv2, fps_cam=30, fps_yolo=30, use_undist=True, fake_img_update_period=5):
+    def __init__(self, cam, framework=CamFrameWorks.cv2, fps_cam=30, fps_yolo=30, use_undist=True, fake_img_update_period=5,
+                 stable_delay=0.2):
         self.framework = framework
         if   framework==CamFrameWorks.cv2:
             if cam==0:
@@ -104,6 +105,20 @@ class TopCameraHandler:
         # Запущена ли YOLO в данный момент
         self.is_yolo_running = True
         self.ts_inference = TimeStamper()
+        
+        self.stable_delay = stable_delay
+        self.update_sink = UpdateSourceModified(
+            get_measured_pos=self.get_position_with_ts_correction,
+            get_measured_yaw=self.get_yaw_with_ts_correction
+            )
+    
+    def get_position_with_ts_correction(self):
+        pos, ts = self.get_our_raw_position()
+        return pos, ts-self.stable_delay
+        
+    def get_yaw_with_ts_correction(self):
+        yaw, ts = self._get_our_raw_rotation()
+        return yaw, ts-self.stable_delay
     
     def continue_yolo(self):
         self.is_yolo_running = True
