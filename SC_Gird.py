@@ -4,14 +4,13 @@ import matplotlib.patches as patches
 import heapq
 
 class Graph:
-    def __init__(self, rows, cols):
+    def __init__(self, size):
         """
         Инициализация графа для прямоугольника.
         :param rows: Количество строк.
         :param cols: Количество столбцов.
         """
-        self.rows = rows
-        self.cols = cols
+        self.size = size
         self.edges = []
         self.objects = {}
         self.node_properties = {}  # Словарь для хранения свойств узлов (размеры и координаты центра)
@@ -21,14 +20,14 @@ class Graph:
         """
         Строит граф по форме прямоугольника с рёбрами между соседними вершинами, включая диагональные связи.
         """
-        for i in range(self.rows):
-            for j in range(self.cols):
+        for i in range(self.size):
+            for j in range(self.size):
                 # Связываем узел (i, j) с соседями справа и снизу, если они есть
-                if i < self.rows - 1:
+                if i < self.size - 1:
                     self.edges.append(((i, j), (i + 1, j), 1))  # Связь с нижним соседом, вес 1
-                if j < self.cols - 1:
+                if j < self.size - 1:
                     self.edges.append(((i, j), (i, j + 1), 1))  # Связь с правым соседом, вес 1
-                
+
     def add_object_to_node(self, object_data):
         """
         Размещает объект в указанной вершине графа. 
@@ -102,6 +101,12 @@ class Graph:
 
         self.add_object_to_node(cube2)
 
+    def get_node_our_robot(self, x, y):
+        for n in self.objects:
+            for i in range(0, len(self.objects[n])):
+                if self.objects[n][i]['center'] == (x, y):
+                    return n
+
     def set_node_properties(self, node, length, width, center_x, center_y):
         """
         Устанавливает длину, ширину и координаты центра для узла.
@@ -150,6 +155,7 @@ class Graph:
                             
                             self.remove_edge(edges_to_remove)
 
+    
     def find_shortest_path(self, start, goal):
         """
         Находит кратчайший путь между двумя вершинами графа с помощью модифицированного алгоритма Дейкстры,
@@ -180,7 +186,7 @@ class Graph:
             current_cost, current, previous_direction = heapq.heappop(open_set)
 
             if current == goal:
-                return self.reconstruct_path_to_aim(came_from, current)
+                return self.reconstruct_path(came_from, current)
 
             for neighbor in G.neighbors(current):
                 tentative_g_score = current_cost + G[current][neighbor]['weight']
@@ -228,11 +234,61 @@ class Graph:
             current = came_from[current]  
             total_path.append(current)  
 
-        total_path[::-1]
+        total_path
 
         del total_path[0]
         return total_path 
     
+    def return_node_coordinate(self):
+        coordinates = []
+        for node, properties in self.node_properties.items():
+            center_x, center_y = properties['center']
+            length = properties['length']
+            width = properties['width']
+            coordinates.append([length, width, (center_x, center_y), node])
+        return coordinates
+    
+    def set_standart_map(self):
+        self.set_node_properties((0, 0), 45, 95, 47.5, 22.5)
+        self.set_node_properties((1, 0), 70, 95, 47.5,80)
+        self.set_node_properties((2, 0), 70, 95, 47.5,150)
+        self.set_node_properties((3, 0), 70, 95, 47.5,220)
+        self.set_node_properties((4, 0), 45, 95, 47.5, 277.5)
+
+        self.set_node_properties((0, 1), 45, 60, 125, 22.5)
+        self.set_node_properties((1, 1), 60, 55, 127.5, 80)
+        self.set_node_properties((2, 1), 80, 50, 125, 150)
+        self.set_node_properties((3, 1), 60, 55, 127.5, 220)
+        self.set_node_properties((4, 1), 45, 60, 125, 277.5)
+
+        self.set_node_properties((0, 2), 45, 70, 190, 22.5)
+        self.set_node_properties((1, 2), 60, 70, 190, 80)
+        self.set_node_properties((2, 2), 70, 70, 190, 150)
+        self.set_node_properties((3, 2), 60, 70, 190, 220)
+        self.set_node_properties((4, 2), 45, 70, 190, 277.5)
+
+        self.set_node_properties((0, 3), 45, 65, 257.5, 22.5)
+        self.set_node_properties((1, 3), 60, 60, 255, 80)
+        self.set_node_properties((2, 3), 80, 55, 257.5, 150)
+        self.set_node_properties((3, 3), 60, 60, 255, 220)
+        self.set_node_properties((4, 3), 45, 65, 257.5, 277.5)
+
+        self.set_node_properties((0, 4), 45, 95, 337.5, 22.5)
+        self.set_node_properties((1, 4), 70, 95, 337.5, 80)
+        self.set_node_properties((2, 4), 70, 95, 337.5, 150)
+        self.set_node_properties((3, 4), 70, 95, 337.5, 220)
+        self.set_node_properties((4, 4), 45, 95, 337.5, 277.5)
+
+        edges_to_remove = [((1, 0), (1, 1)), ((0, 1), (1, 1)), 
+                   ((1, 3), (1, 4)),((1, 3), (0, 3)), 
+                   ((4, 3), (3, 3)),((3, 3), (3, 4)),
+                   ((4, 1), (3,1)),((3, 0), (3, 1)),
+                   ((2, 2), (1,2)),((2, 2), (3, 2)),
+                   ((2, 0), (2,1)),((2, 3), (2, 4)),]
+        
+        self.remove_edge(edges_to_remove)
+        
+
     def visualize(self, path=None):
         """
         Визуализация графа с объектами в вершинах и опционально с кратчайшим путём.
@@ -282,34 +338,6 @@ class Graph:
                         # Подпись для объекта
                         plt.text(obj_center_x, obj_center_y+7, obj['name'], ha='center', va='center', fontsize=8, color='black')
 
-        # Проверка наличия связей и выделение чёрных граней, где их нет
-        for i in range(self.rows):
-            for j in range(self.cols):
-                current_node = (i, j)
-
-                # Проверяем связь с правым соседом
-                if j < self.cols - 1:
-                    right_neighbor = (i, j + 1)
-                    if not G.has_edge(current_node, right_neighbor):
-                        # Нарисовать чёрную грань
-                        current_props = self.node_properties[current_node]
-                        right_props = self.node_properties[right_neighbor]
-                        right_x = current_props['center'][0] + current_props['width'] / 2
-                        right_y_top = current_props['center'][1] + current_props['length'] / 2
-                        right_y_bottom = current_props['center'][1] - current_props['length'] / 2
-                        plt.plot([right_x, right_x], [right_y_bottom, right_y_top], color='black', linewidth=2)
-
-                # Проверяем связь с нижним соседом
-                if i < self.rows - 1:
-                    bottom_neighbor = (i + 1, j)
-                    if not G.has_edge(current_node, bottom_neighbor):
-                        # Нарисовать чёрную грань
-                        current_props = self.node_properties[current_node]
-                        bottom_props = self.node_properties[bottom_neighbor]
-                        bottom_y = current_props['center'][1] + current_props['length'] / 2
-                        bottom_x_left = current_props['center'][0] - current_props['width'] / 2
-                        bottom_x_right = current_props['center'][0] + current_props['width'] / 2
-                        plt.plot([bottom_x_left, bottom_x_right], [bottom_y, bottom_y], color='black', linewidth=2)
 
         # Если путь задан, визуализируем его красными линиями
         if path:
@@ -322,102 +350,4 @@ class Graph:
                 plt.plot([x1, x2], [y1, y2], color='red', linewidth=2)
 
         ax.set_aspect('equal', adjustable='box')
-        plt.title(f"Rectangular Graph Visualization ({self.rows}x{self.cols})")
         plt.show()
-
-# Размеры графа
-rows = cols = 5
-
-# Создаём граф
-g = Graph(rows, cols)
-
-start = (0, 0)
-goal = (4, 4)
-
-g.set_node_properties((0, 0), 95, 45, 22.5, 47.5)
-g.set_node_properties((0, 1), 95, 70, 80, 47.5)
-g.set_node_properties((0, 2), 95, 70, 150, 47.5)
-g.set_node_properties((0, 3), 95, 70, 220, 47.5)
-g.set_node_properties((0, 4), 95, 45, 277.5, 47.5)
-
-g.set_node_properties((1, 0), 60, 45, 22.5, 125)
-g.set_node_properties((1, 1), 55, 60, 80, 127.5)
-g.set_node_properties((1, 2), 50, 80, 150, 125)
-g.set_node_properties((1, 3), 55, 60, 220, 127.5)
-g.set_node_properties((1, 4), 60, 45, 277.5, 125)
-
-g.set_node_properties((2, 0), 70, 45, 22.5, 190)
-g.set_node_properties((2, 1), 70, 60, 80, 190)
-g.set_node_properties((2, 2), 70, 70, 150, 190)
-g.set_node_properties((2, 3), 70, 60, 220, 190)
-g.set_node_properties((2, 4), 70, 45, 277.5, 190)
-
-g.set_node_properties((3, 0), 65, 45, 22.5, 257.5)
-g.set_node_properties((3, 1), 60, 60, 80, 255)
-g.set_node_properties((3, 2), 55, 80, 150, 257.5)
-g.set_node_properties((3, 3), 60, 60, 220, 255)
-g.set_node_properties((3, 4), 65, 45, 277.5, 257.5)
-
-g.set_node_properties((4, 0), 95, 45, 22.5, 337.5)
-g.set_node_properties((4, 1), 95, 70, 80, 337.5)
-g.set_node_properties((4, 2), 95, 70, 150, 337.5)
-g.set_node_properties((4, 3), 95, 70, 220, 337.5)
-g.set_node_properties((4, 4), 95, 45, 277.5, 337.5)
-
-сube1_position = [(4, 4), 'cube', 5, 5, 280, 340]
-cube2_position = [(4, 0), 'cube', 5, 5, 22.5, 337.5]
-
-sphere_position = [(2, 2), 'sphere', 5, 5, 150, 190]
-
-base1_position = [(2, 0), 'base', 42, 29.7, 29.7/2, 190]
-base2_position = [(2, 4), 'base', 42, 29.7, 300-29.7/2, 190]
-
-backet1_position = [(2, 2), 'backet', 15, 10, 5, 190]
-basket2_position = [(4, 4), 'backet', 15, 10, 295, 190]
-
-button1_position = [(2, 2), 'button', 16, 20, 150, 8]
-button2_position = [(4, 4), 'button', 16, 20, 150, 385-8]
-
-out_robot_position = [start, 'our', 25, 29, 22.5, 47.5]
-alien_robot_position = [(1, 4), 'alien', 29, 25, 277.5, 125]
-
-g.add_object_to_node(сube1_position)
-g.add_object_to_node(cube2_position)
-
-g.add_object_to_node(sphere_position)
-
-g.add_object_to_node(base1_position)
-g.add_object_to_node(base2_position)
-
-g.add_object_to_node(backet1_position)
-g.add_object_to_node(basket2_position)
-
-g.add_object_to_node(button1_position)
-g.add_object_to_node(button2_position)
-
-g.add_object_to_node(button1_position)
-g.add_object_to_node(button2_position)
-
-g.add_object_to_node(out_robot_position)
-g.add_object_to_node(alien_robot_position)
-
-edges_to_remove = [((1, 0), (1, 1)), ((0, 1), (1, 1)), 
-                   ((1, 3), (1, 4)),((1, 3), (0, 3)), 
-                   ((4, 3), (3, 3)),((3, 3), (3, 4)),
-                   ((4, 1), (3,1)),((3, 0), (3, 1)),
-                   ((2, 2), (1,2)),((2, 2), (3, 2)),
-                   ((2, 0), (2,1)),((2, 3), (2, 4)),]
-
-g.remove_edge(edges_to_remove)
-
-g.remove_edge_by_objects()
-
-# Пример поиска кратчайшего пути
-start = (0, 0)
-goal = (4, 4)
-path = g.find_shortest_path(start, goal)
-print(f"Кратчайший путь: {path}")
-
-# Визуализируем граф с кратчайшим путём
-g.visualize(path)
-
