@@ -243,9 +243,10 @@ class TopCameraHandler:
         ts = self.timestamp_yolo
 
         robot_pos = get_our_robot_pos_3(self.frame, self.results, self.robot_color)
+        if robot_pos == None:
+            return None,None, ts
+
         x1, y1, x2, y2 = robot_pos
-        if x1 == np.NAN:
-            return None, None, ts
 
         x, y = to_map_system(get_koeffs(self.results), (x2 - x1), (y2 - y1))
         return np.array([x, y]), ts
@@ -261,6 +262,8 @@ class TopCameraHandler:
         angle_deg = None
 
         robot_pos = get_our_robot_pos_3(self.frame, self.results, self.robot_color)
+        if robot_pos == None:
+            return None
         robot_dir = (0,0,1,1)
         if robot_pos:
             robot_dir, _, _ = get_direction_for_one(self.frame, robot_pos, (0, 0, 0, 0))

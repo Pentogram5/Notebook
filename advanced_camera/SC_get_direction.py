@@ -9,7 +9,7 @@ def calculate_slope(line):
 
     return round(math.atan((y2 - y1) / (x2 - x1)) * 180 / math.pi)
 
-def get_direction(frame, results, margin=(10,10,10,10)):
+def get_direction(frame, results, margin=(0,0,0,0)):
     robots = []
     accs = []
     for result in results:
