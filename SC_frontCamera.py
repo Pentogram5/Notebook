@@ -2,7 +2,6 @@ from SC_utils import *
 import threading
 
 import cv2
-import cv2
 from ultralytics import YOLO
 import numpy as np
 

@@ -71,7 +71,6 @@ class Average:
 
     def __init__(self, windowSize):
         self.windowSize = windowSize
-        
     
     def __call__(self, newValue):
         if not self._arr:
@@ -114,18 +113,25 @@ class Grabber:
     def getCurrentState(self):
         return 'Current state: ' + self.states[self.currentState]
 
-    
+
     def search(self, objClass):
         A = Average(5)
         beginTime = time.time()
+        spinTime = time.time()
+        spinDelta = 1
+        speed = 50
         while time.time() - beginTime < 30:
             _, conf = getXofObject(objClass)
             averageConf = A(conf)
             print('search', averageConf)
+            if time.time() - spinTime > spinDelta:
+                spinDelta += 1
+                speed *= -1
+                spinTime = time.time()
             if averageConf < 0.4:
-                self.ram.set_speeds(0, 50)
+                self.ram.set_speeds(0, speed)
             elif averageConf < 0.8:
-                self.ram.set_speeds(0, 0)
+                self.stop()
             else:
                 return True
         return False
@@ -138,7 +144,7 @@ class Grabber:
         while time.time() - beginTime < 30:
             x, _ = getXofObject(objClass)
             if x:
-                count = 20
+                count = 0
                 w = pid(x)
                 self.ram.set_speeds(0, w)
                 averageX = A(x)
@@ -146,7 +152,7 @@ class Grabber:
                 if abs(2 * averageX - self.image_w) * 100 / self.image_w < self.image_aim:
                     self.stop()
                     return True
-            elif count < 20:
+            elif count < 10:
                 count += 1
             else:
                 break
@@ -155,11 +161,12 @@ class Grabber:
 
     def sneakCube(self, objClass):
         pid = self.pids[2]
-        count = 20
+        count = 0
         beginTime = time.time()
         while time.time() - beginTime < 30:
             x, conf = getXofObject(objClass)
             if x:
+                count = 0
                 w = pid(x)
                 self.ram.set_speeds(6, w)
                 print('sneak Cube', x, w)
@@ -167,8 +174,8 @@ class Grabber:
                 if Sensors.IR_R.filteredValue < 0.2:
                     self.stop()
                     return True
-            elif count > 0:
-                count -= 1
+            elif count < 10:
+                count += 1
             else:
                 break
         self.stop()
@@ -176,20 +183,21 @@ class Grabber:
     
     def sneakSphere(self, objClass):
         pid = self.pids[2]
-        count = 20
+        count = 0
         beginTime = time.time()
         while time.time() - beginTime < 30:
             x, conf = getXofObject(objClass)
             if x:
+                count = 0
                 w = pid(x)
                 self.ram.set_speeds(6, w)
-                print('sneak Cube', x, w)
+                print('sneak Sphere', x, w)
                 print(Sensors.IR_R.filteredValue)
                 if Sensors.IR_R.filteredValue < 0.2:
                     self.stop()
                     return True
-            elif count > 0:
-                count -= 1
+            elif count < 20:
+                count += 1
             else:
                 break
         self.stop()
@@ -197,20 +205,20 @@ class Grabber:
     
     def sneakBasket(self, objClass):
         pid = self.pids[2]
-        count = 20
+        count = 0
         beginTime = time.time()
         while time.time() - beginTime < 30:
             x, conf = getXofObject(objClass)
             if x:
                 w = pid(x)
                 self.ram.set_speeds(6, w)
-                print('sneak Base', x, w)
+                print('sneak Basket', x, w)
                 print(Sensors.ULTRASONIC.rawValue)
                 if Sensors.ULTRASONIC.rawValue < 14:
                     self.stop()
                     return True
-            elif count > 0:
-                count -= 1
+            elif count < 20:
+                count += 1
             else:
                 break
         self.stop()
@@ -230,25 +238,16 @@ class Grabber:
         result = True
 
         if result:
-            getXofObject(objClass)
-            getXofObject(objClass)
-            getXofObject(objClass)
             self.currentState = 1
             print(self.getCurrentState())
             result = self.search(objClass)
 
         if result:
-            getXofObject(objClass)
-            getXofObject(objClass)
-            getXofObject(objClass)
             self.currentState = 2
             print(self.getCurrentState())
             result = self.aim(objClass)
         
         if result:
-            getXofObject(objClass)
-            getXofObject(objClass)
-            getXofObject(objClass)
             self.currentState = 3
             print(self.getCurrentState())
             if objClass == 'cube':
@@ -261,9 +260,6 @@ class Grabber:
                 result = False
         
         if result:
-            getXofObject(objClass)
-            getXofObject(objClass)
-            getXofObject(objClass)
             self.currentState = 4
             print(self.getCurrentState())
             if objClass in ['cube', 'sphere']:
