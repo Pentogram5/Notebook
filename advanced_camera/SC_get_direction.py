@@ -369,10 +369,10 @@ def find_barriers(frame, results):
     y_c = (y_min + y_max) // 2
     MARG = 40 # эвристика, опытным путем определили
     SHT = 40 # эвристика, опытным путем определили
-    cv2.rectangle(frame, (x_c - MARG, y_min - MARG + SHT), (x_c + MARG, y_min + MARG + SHT), (255, 0, 0), 4) #1
-    cv2.rectangle(frame, (x_c - MARG, y_max - MARG - SHT), (x_c + MARG, y_max + MARG - SHT), (255, 0, 0), 4) #3
-    cv2.rectangle(frame, (x_min - MARG + SHT, y_c - MARG), (x_min + MARG + SHT, y_c + MARG), (255, 0, 0), 4) #4
-    cv2.rectangle(frame, (x_max - MARG - SHT, y_c - MARG), (x_max + MARG - SHT, y_c + MARG), (255, 0, 0), 4) #2
+    # cv2.rectangle(frame, (x_c - MARG, y_min - MARG + SHT), (x_c + MARG, y_min + MARG + SHT), (255, 0, 0), 4) #1
+    # cv2.rectangle(frame, (x_c - MARG, y_max - MARG - SHT), (x_c + MARG, y_max + MARG - SHT), (255, 0, 0), 4) #3
+    # cv2.rectangle(frame, (x_min - MARG + SHT, y_c - MARG), (x_min + MARG + SHT, y_c + MARG), (255, 0, 0), 4) #4
+    # cv2.rectangle(frame, (x_max - MARG - SHT, y_c - MARG), (x_max + MARG - SHT, y_c + MARG), (255, 0, 0), 4) #2
     box1 = [x_c - MARG, y_min - MARG + SHT, x_c + MARG, y_min + MARG + SHT]
     box2 = [x_max - MARG - SHT, y_c - MARG, x_max + MARG - SHT, y_c + MARG]
     box3 = [x_c - MARG, y_max - MARG - SHT, x_c + MARG, y_max + MARG - SHT]
