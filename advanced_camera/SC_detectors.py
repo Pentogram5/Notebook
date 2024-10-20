@@ -49,9 +49,10 @@ class FileCamera:
             self.index = (self.index + 1) % len(self.imgs)
             self.last_time = t
         return True, self.imgs[self.index]
-
+# trtrtrttttyyyy.mp4
+# trtrtrt.mp4
 class VideoCamera:
-    def __init__(self, path="./new9/trtrtrt.mp4"):
+    def __init__(self, path="./new9/tmp.mp4"):
         # Инициализация видеокамеры
         self.video = cv2.VideoCapture(path)
         if not self.video.isOpened():
@@ -159,6 +160,8 @@ class TopCameraHandler:
         
         self.last_pos_update_ts = 0
         self.last_yaw_update_ts = 0
+        
+        self.koefs = [1, 1, 0, 0]
     
     def get_position_with_ts_correction(self):
         pos, ts = self.get_our_raw_position()
@@ -248,6 +251,7 @@ class TopCameraHandler:
         
         # Запись результатов
         self.results = res
+        self.koefs = get_koeffs(self.results)
         
         # Сохранение времени последнего обработанного изображения, чтобы проверить на изменения в изображении
         self.last_timestamp_yolo = self.timestamp_yolo
@@ -302,7 +306,12 @@ class TopCameraHandler:
 
             x1, y1, x2, y2 = robot_pos
 
-            x, y = to_map_system(get_koeffs(self.results), (x2 + x1) // 2, (y2 + y1) // 2)
+            px_px, py_px = (x2 + x1) // 2, (y2 + y1) // 2
+            self.koefs = get_koeffs(self.results)
+            x, y = to_map_system(get_koeffs(self.results), px_px, py_px)
+            # NW_SW_NE=get_NW_SW_NE(self.results)
+            # # print(px_px, py_px, NW_SW_NE)
+            # x, y = from_px_to_cm((px_px, py_px), NW_SW_NE=NW_SW_NE)
             return np.array([x, y]), ts
         except Exception as ex:
             # print('get_our_raw_position exception', ex)

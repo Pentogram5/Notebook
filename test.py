@@ -3,6 +3,7 @@ from advanced_camera.test_mod import get_img_and_res
 from SC_API_tcp import *
 from SC_advenced_movement import ram
 from SC_INS import *
+from advanced_camera.SC_CS import show_sm_point
 
 
 tch = TopCameraHandler(0, framework=CamFrameWorks.testVideo, fake_img_update_period=2, use_undist=True)
@@ -92,6 +93,19 @@ while True:
     if res != None:
         x1, y1, x2, y2 = res
         cv2.circle(frame, ((x1 + x2) // 2, (y1 + y2) // 2), 5, (0, 255, 255), 5)
+    print(tch.koefs)
+    show_sm_point(frame, tch.koefs, (100, 45))
+    show_sm_point(frame, tch.koefs, (100+55, 45))
+    show_sm_point(frame, tch.koefs, (100, 45+70*3))
+    show_sm_point(frame, tch.koefs, (0,0))
+    show_sm_point(frame, tch.koefs, (100+55+70+55+15, 45))
+    
+    show_sm_point(frame, tch.koefs, (100+55+70+55+15, 45+70*3))
+    show_sm_point(frame, tch.koefs, (400, 310))
+    
+    points = [(i*10, 45) for i in range(10)]
+    for p in points:
+        show_sm_point(frame, tch.koefs, p)
     cv2.imshow('Video Stream', frame)
     # #cv2.imshow('Video Stream', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
