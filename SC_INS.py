@@ -1,6 +1,6 @@
-from simulator.SC_sim import *
-from SC_API_sim import *
-import simulator.SC_sim
+# from simulator.SC_sim import *
+from SC_API_tcp import *
+# import simulator.SC_sim
 from SC_advenced_movement import *
 import time
 import math
@@ -188,6 +188,8 @@ class INS:
         self.ram = ram
         self.ram.ins = self
         self.tr_speed = ThreadRate(speed_update_rate)
+        self.tr_pos   = ThreadRate(speed_update_rate)
+        self.tr_yaw   = ThreadRate(speed_update_rate)
                     
         # # Wheights of sources
         # self.P_of_pos_predict = 0.5
@@ -217,12 +219,17 @@ class INS:
     def _update_pos(self):
         while True:
             pos, ts = self.update_source.get_measured_pos()
-            self.update_pos(pos, ts)
+            if pos is not None:
+                self.update_pos(pos, ts)
+            # print(ts)
+            self.tr_pos.sleep()
     
     def _update_yaw(self):
         while True:
             yaw, ts = self.update_source.get_measured_yaw()
-            self.update_yaw(yaw, ts)
+            if yaw is not None:
+                self.update_yaw(yaw, ts)
+            self.tr_yaw.sleep()
     
     def get_past_pos(self, timestamp):
         return self._position + self.pos_integrator.get_closest_timestamp_value(timestamp)[0]

@@ -2,6 +2,7 @@ from advanced_camera.SC_detectors import *
 from advanced_camera.test_mod import get_img_and_res
 from SC_API_tcp import *
 from SC_advenced_movement import ram
+from SC_INS import *
 
 
 tch = TopCameraHandler(0, framework=CamFrameWorks.testVideo, fake_img_update_period=2, use_undist=True)
@@ -9,6 +10,8 @@ tch = TopCameraHandler(0, framework=CamFrameWorks.testVideo, fake_img_update_per
 # #     # print(tch.results, tch.timestamp)
 # #     ...
 tch.start_camera_handling()
+ins = INS(ram=ram, update_source=tch.update_sink)
+ins.start_updater()
 
 # print('NIGGERS0')
 # Инициализация клиентов
@@ -57,6 +60,7 @@ tch.start_camera_handling()
 #     # Устанавливаем скорости моторов
 #     ram.set_speeds(v, w)
 
+print('NIGGER')
 while True:
         
     ret, frame = tch.read_yolo()
@@ -81,7 +85,7 @@ while True:
     
     # update_speeds()
     # ram.set_speeds(20, 20)
-    print(tch.get_our_raw_position())
+    print(ins.get_pos())
     res = get_our_robot_pos_3(frame, results, 'red')
     if res != None:
         x1, y1, x2, y2 = res
