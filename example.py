@@ -28,7 +28,7 @@ def update_speeds():
         left_speed -= 20
         right_speed += 20
     if keyboard.is_pressed('d'):  # Вправо
-        left_speed += 20
+        left_speed += 1
         right_speed -= 20
     
     if keyboard.is_pressed('q'):  # Вправо
@@ -36,6 +36,12 @@ def update_speeds():
     
     if keyboard.is_pressed('e'):  # Вправо
         perform_action_capture()
+        
+    if keyboard.is_pressed('g'):  # Вправо
+        set_green_light()
+    
+    if keyboard.is_pressed('r'):  # Вправо
+        set_red_light()
 
     # Устанавливаем скорости моторов
     rb.set_speed_cms_left(left_speed)
