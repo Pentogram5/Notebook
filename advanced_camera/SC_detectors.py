@@ -290,7 +290,7 @@ class TopCameraHandler:
         # - timestamp с которого их получили
         ts = self.timestamp_yolo
 
-        robot_pos = get_our_robot_pos_3(self.frame, self.results, self.robot_color)
+        robot_pos = get_our_robot_pos_4(self.frame, self.results, self.robot_color)
         if robot_pos == None:
             return None,None, ts
 
@@ -309,7 +309,7 @@ class TopCameraHandler:
         # ts = self.timestamp_yolo
         angle_deg = None
 
-        robot_pos = get_our_robot_pos_3(self.frame, self.results, self.robot_color)
+        robot_pos = get_our_robot_pos_4(self.frame, self.results, self.robot_color)
         if robot_pos == None:
             return None
         robot_dir = (0,0,1,1)

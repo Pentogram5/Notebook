@@ -82,7 +82,7 @@ while True:
     # update_speeds()
     # ram.set_speeds(20, 20)
     print(tch.get_our_raw_position())
-    res = get_our_robot_pos_3(frame, results, 'red')
+    res = get_our_robot_pos_4(frame, results, 'red')
     if res != None:
         x1, y1, x2, y2 = res
         cv2.circle(frame, ((x1 + x2) // 2, (y1 + y2) // 2), 5, (0, 255, 255), 5)

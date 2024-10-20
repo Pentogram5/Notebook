@@ -338,7 +338,92 @@ def get_our_robot_pos_3(frame, results, col):
         if col == 'red':
             return clr1[1]
         return clr2[1]
-    
+
+
+def get_our_robot_pos_4(frame, results, col):
+    robots = []
+    accs = []
+
+    for result in results:
+        boxes = result.boxes
+        for box in boxes:
+            score = box.conf.item()  # Confidence score
+            cls = result.names[box.cls.int().item()]  # Class name
+            if cls == 'robot':
+                robots.append(list(map(int, box.xyxy.flatten().cpu().numpy())))  # Convert to integers)
+                accs.append(score)
+
+    sorted_indices = sorted(range(len(accs)), key=lambda i: accs[i], reverse=True)
+    # Step 2: Create sorted arrays using the sorted indices
+    sorted_array = [accs[i] for i in sorted_indices]
+    sorted_consequence_array = [robots[i] for i in sorted_indices]
+
+    ind = 0
+    clrs = []
+    for robot in sorted_consequence_array:
+        if ind >= 2:
+            break
+        ind += 1
+        x1 = robot[0]
+        y1 = robot[1]
+        x2 = robot[2]
+        y2 = robot[3]
+
+        src = frame[y1:y2, x1:x2]
+
+        img_hsv = cv2.cvtColor(src, cv2.COLOR_BGR2HSV)
+
+        h, s, v = cv2.split(img_hsv)
+
+        mask = (v > 240).astype(np.uint8) * 255
+
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))  # A 5x5 square kernel
+        # Step 3: Apply dilation to increase the shape of the mask
+        dilated_mask = cv2.dilate(mask, kernel, iterations=5)
+
+        mask_3channel_new = cv2.merge([dilated_mask, dilated_mask, dilated_mask])
+        # mask_3channel_old = cv2.merge([mask, mask, mask])
+        masked_image_new = cv2.bitwise_and(src, mask_3channel_new)
+        # masked_image_old = cv2.bitwise_and(src, mask_3channel_old)
+
+        # cv2.imshow('new', masked_image_new)
+        # cv2.imshow('old', masked_image_old)
+        # cv2.waitKey(0)
+
+        b, g, r = cv2.split(masked_image_new)
+        g_mean = np.mean(g)
+        r_mean = np.mean(r)
+        # print(g_mean, r_mean)
+        if g_mean > r_mean:
+            clrs.append(['green', robot, r_mean - g_mean])
+        else:
+            clrs.append(['red', robot, r_mean - g_mean])
+
+    if len(robots) == 0:
+        return None
+
+    if len(robots) == 1:
+        if clrs[0][0] == col:
+            return clrs[0][1]
+        return None
+
+    clr1 = clrs[0]
+    clr2 = clrs[1]
+    if clr2[2] > clr1[2]:
+        clr2[0] = 'red'
+        clr1[0] = 'green'
+
+        if col == 'red':
+            return clr2[1]
+        return clr1[1]
+
+    else:
+        clr1[0] = 'red'
+        clr2[0] = 'green'
+        if col == 'red':
+            return clr1[1]
+        return clr2[1]
+
 
 def find_barriers(frame, results):
     x_min = 10e6
