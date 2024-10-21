@@ -23,7 +23,8 @@ def get_closest_PL(data, robot_coordinates, border): # Поиск минимал
     size  = 5
     g = Graph(size)
     g.set_standart_map()
-    base_map = g.return_node_coordinate()
+    block_edges = block_border(border)
+    g.remove_edge(block_edges)
     add_data(g, data)
     block_edges = block_border(border)
     g.remove_edge(block_edges)
@@ -79,6 +80,11 @@ def get_current_path(g, base_map, aim, robot_coordinates): # Построени�
     cootdinate_path = g.reconstruct_path_to_aim(path)
     return cootdinate_path
 
+def block_border(block_arr):
+    if block_arr[0] == 1 and block_arr[2] == 1:
+        return [((4,2),(3,2)), ((1,2),(0,2))]
+    else:
+        return [((2,3),(2,4)), ((2,0),(2,1))]
 
 def block_border(block_arr):
     borders = []
