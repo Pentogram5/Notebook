@@ -7,7 +7,7 @@ from advanced_camera.SC_CS import show_sm_point
 from SC_Gird_connect import *
 
 
-tch = TopCameraHandler(0, framework=CamFrameWorks.testVideo, fake_img_update_period=2, use_undist=True,
+tch = TopCameraHandler(0, framework=CamFrameWorks.cv2, fake_img_update_period=2, use_undist=True,
                        robot_color=RobotColors.RED)
 # # while True:
 # #     # print(tch.results, tch.timestamp)
@@ -97,17 +97,35 @@ while True:
     res_sm = get_our_robot_pos_4_sm(frame, results, 'green') #fix
     print("res_sm: ", res_sm)
     res = get_our_robot_pos_4(frame, results, 'green') #fix
+    res22 = get_direction(frame, results)
     barriers = find_barriers(frame, results)  
     min_path_to_cube = get_closest_PL(data, res_sm, barriers)
-    print('start')
-    print(min_path_to_cube)
-    print('end')
+
+
+
     # for cube
     if min_path_to_cube != 0:
         for i in range(1, len(min_path_to_cube)):
             frame = show_sm_line(frame, get_koeffs(results), min_path_to_cube[i - 1], min_path_to_cube[i])
     
     
+    for result in results:
+        boxes = result.boxes  # Get bounding box outputs
+        for box in boxes:
+            # Extract coordinates and class information
+            x1, y1, x2, y2 = map(int, box.xyxy.flatten().cpu().numpy())  # Convert to integers
+            score = box.conf.item()  # Confidence score
+            cls = result.names[box.cls.int().item()]  # Class name
+
+            # Draw the bounding box and label on the image
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)  # Green rectangle
+            cv2.putText(frame, f'{cls} {score:.2f}', (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+    for item in res22:
+        line,  xx, yy = item
+        x1, y1, x2, y2 = line
+        cv2.line(frame, (xx + x1, yy + y1), (xx + x2, yy + y2), (0, 0, 255), thickness=4)
+        cv2.circle(frame, (xx + x2, yy + y2), radius=10, color=(0, 0, 255))
     
     if res is not None:
         x1, y1, x2, y2 = res

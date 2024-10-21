@@ -27,6 +27,7 @@ def get_closest_PL(data, robot_coordinates, border): # Поиск минимал
     g.remove_edge(block_edges)
     add_data(g, data)
     block_edges = block_border(border)
+    base_map = g.return_node_coordinate()
     g.remove_edge(block_edges)
     g.remove_edge_by_objects()
     for key, value in data.items():
@@ -35,15 +36,15 @@ def get_closest_PL(data, robot_coordinates, border): # Поиск минимал
                 try:
                     x, y = build_center(data[0], data[1], data[2], data[3])
                     vertex = calculate_vertex_objects(x, y, base_map)
-                    curr_path = get_current_path(g,base_map, vertex, robot_coordinates)
+                    curr_path = get_current_path(g, base_map, vertex, robot_coordinates)
                     paths.append(curr_path)
                 except Exception as e:
                     continue
     print("Pats: ", paths)
-    min_path_count = 0
+    min_path_count = 100
     min_path = 0
     for p in range(0, len(paths)):
-        if len(paths[p]) >= min_path_count:
+        if len(paths[p]) <= min_path_count:
             min_path_count = len(paths[p])
             min_path = paths[p]
     
@@ -79,12 +80,6 @@ def get_current_path(g, base_map, aim, robot_coordinates): # Построени�
     # del path[-1]
     cootdinate_path = g.reconstruct_path_to_aim(path)
     return cootdinate_path
-
-def block_border(block_arr):
-    if block_arr[0] == 1 and block_arr[2] == 1:
-        return [((4,2),(3,2)), ((1,2),(0,2))]
-    else:
-        return [((2,3),(2,4)), ((2,0),(2,1))]
 
 def block_border(block_arr):
     borders = []

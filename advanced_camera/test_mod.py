@@ -14,7 +14,7 @@ def get_img_and_res(frame, results):
     #model2 = YOLO('best_small.pt')
     # model3 = YOLO('best_cam.pt')
 
-    rtsp_url = "video.mp4"
+    # rtsp_url = "video.mp4"
     #rtsp_url = "rtsp://Admin:rtf123@192.168.2.250/251:554/1/1"
     # rtsp_url = "rtsp://Admin:rtf123@192.168.2.251/251:554/1/1"
     # cap = cv2.VideoCapture(rtsp_url)
@@ -44,16 +44,16 @@ def get_img_and_res(frame, results):
             cls = result.names[box.cls.int().item()]  # Class name
 
             # Draw the bounding box and label on the image
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)  # Green rectangle
-            cv2.putText(frame, f'{cls} {score:.2f}', (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            # cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)  # Green rectangle
+            # cv2.putText(frame, f'{cls} {score:.2f}', (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
     res = get_direction(frame, results)
 
     for item in res:
         line,  xx, yy = item
         x1, y1, x2, y2 = line
-        cv2.line(frame, (xx + x1, yy + y1), (xx + x2, yy + y2), (0, 0, 255), thickness=4)
-        cv2.circle(frame, (xx + x2, yy + y2), radius=10, color=(0, 0, 255))
+        # cv2.line(frame, (xx + x1, yy + y1), (xx + x2, yy + y2), (0, 0, 255), thickness=4)
+        # cv2.circle(frame, (xx + x2, yy + y2), radius=10, color=(0, 0, 255))
     
     # TODO - преобразование координат
     return frame, (x2-x1, y2-y1)
