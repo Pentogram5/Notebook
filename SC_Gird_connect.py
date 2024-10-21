@@ -19,12 +19,13 @@ def build_center(x1, y1, x2, y2): # Вычисление центра коорд
 
     return x, y
 
-def get_closest_PL(data, robot_coordinates): # Поиск минимального пути для кубов
+def get_closest_PL(data, robot_coordinates, border): # Поиск минимального пути для кубов
     paths = []
     size  = 5
     g = Graph(size)
     g.set_standart_map()
-    base_map = g.return_node_coordinate()
+    block_edges = block_border(border)
+    g.remove_edge(block_edges)
     add_data(g, data)
     for key, value in data.items():
         if key == 'cube':
@@ -71,6 +72,11 @@ def get_current_path(g, aim, robot_coordinates): # Построение граф
     cootdinate_path = g.reconstruct_path_to_aim(path)
     return cootdinate_path
 
+def block_border(block_arr):
+    if block_arr[0] == 1 and block_arr[2] == 1:
+        return [((4,2),(3,2)), ((1,2),(0,2))]
+    else:
+        return [((2,3),(2,4)), ((2,0),(2,1))]
 
 # # Example
 # dict = {
