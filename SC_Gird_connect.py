@@ -1,5 +1,4 @@
 from SC_Gird import *
-# from SC_detectors import * - надо добавить метод получения данных с YOLO
 
 def calculate_vertex_objects(x, y, g): # Вычисление вершины в которой находится объект
     base_map = g.return_node_coordinate()
@@ -20,7 +19,7 @@ def build_center(x1, y1, x2, y2): # Вычисление центра коорд
 
     return x, y
 
-def get_nearest_cube_path(data, robot_coordinates): # Поиск минимального пути для кубов
+def get_closest_PL(data, robot_coordinates): # Поиск минимального пути для кубов
     paths = []
     size  = 5
     g = Graph(size)
@@ -43,7 +42,6 @@ def get_nearest_cube_path(data, robot_coordinates): # Поиск минимал�
             min_path_count = len(paths[p])
             min_path = paths[p]
     
-    print(min_path)
     return min_path
 
 def get_to_base(data, robot_coordinates, base_coordinates): # Поиск минимального пути до базы
@@ -69,16 +67,15 @@ def get_current_path(g, aim, robot_coordinates): # Построение граф
     start = start_vertex
     g.remove_edge_by_objects()
     path = g.find_shortest_path(start, aim)
-    g.visualize(path)
     del path[-1]
-    print(path)
-    return path
+    cootdinate_path = g.reconstruct_path_to_aim(path)
+    return cootdinate_path
 
 
-# Example
-dict = {
-    "cube": [[100, 150, 200, 250],[50, 10, 10, 50]],
-    "robot": [[300, 350, 200, 250]],
-    "alien": [[30, 35, 20, 20]]}
+# # Example
+# dict = {
+#     "cube": [[100, 150, 200, 250],[50, 10, 10, 50]],
+#     "robot": [[300, 350, 200, 250]],
+#     "alien": [[30, 35, 20, 20]]}
 
-get_nearest_cube_path(dict, [300, 350, 200, 250])
+# get_closest_PL(dict, [300, 350, 200, 250])

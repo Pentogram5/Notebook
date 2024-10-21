@@ -4,6 +4,8 @@ from SC_API_tcp import *
 from SC_advenced_movement import ram
 from SC_INS import *
 from advanced_camera.SC_CS import show_sm_point
+from SC_Gird_connect import *
+from advanced_camera.SC_detectors import get_objects
 
 
 tch = TopCameraHandler(0, framework=CamFrameWorks.testVideo, fake_img_update_period=2, use_undist=True,
