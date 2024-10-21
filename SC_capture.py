@@ -84,8 +84,6 @@ class Average:
         self._ind += 1
         return self.average
 
-    
-
 
 class Grabber:
     image_w = 640
@@ -101,7 +99,8 @@ class Grabber:
     }
     pids = {
         1: PID(-0.1, 0, 0, setpoint=image_w//2, output_limits=(-40, 40)),
-        2: PID(-0.1, 0, 0, setpoint=image_w//2, output_limits=(-40, 40)),
+        2: PID(-0.2, 0, 0, setpoint=image_w//2, output_limits=(-40, 40)),
+        3: PID(-0.2, 0, 0, setpoint=image_w//2, output_limits=(-40, 40)),
     }
     currentState = None
 
@@ -118,14 +117,14 @@ class Grabber:
         A = Average(5)
         beginTime = time.time()
         spinTime = time.time()
-        spinDelta = 1
+        spinDelta = 3
         speed = 50
         while time.time() - beginTime < 30:
             _, conf = getXofObject(objClass)
             averageConf = A(conf)
             print('search', averageConf)
             if time.time() - spinTime > spinDelta:
-                spinDelta += 1
+                spinDelta += 20
                 speed *= -1
                 spinTime = time.time()
             if averageConf < 0.4:
@@ -163,17 +162,24 @@ class Grabber:
         pid = self.pids[2]
         count = 0
         beginTime = time.time()
+        beginSensorState = Sensors.IR_R.filteredValue > 0.5
         while time.time() - beginTime < 30:
             x, conf = getXofObject(objClass)
             if x:
                 count = 0
                 w = pid(x)
-                self.ram.set_speeds(6, w)
+                if beginSensorState:
+                    self.ram.set_speeds(6, w)
+                    if Sensors.IR_R.filteredValue < 0.2:
+                        self.stop()
+                        return True
+                else:
+                    self.ram.set_speeds(-6, w)
+                    if Sensors.IR_R.filteredValue > 0.8:
+                        self.stop()
+                        return True
                 print('sneak Cube', x, w)
                 print(Sensors.IR_R.filteredValue)
-                if Sensors.IR_R.filteredValue < 0.2:
-                    self.stop()
-                    return True
             elif count < 10:
                 count += 1
             else:
@@ -213,8 +219,8 @@ class Grabber:
                 w = pid(x)
                 self.ram.set_speeds(6, w)
                 print('sneak Basket', x, w, Sensors.ULTRASONIC.filteredValue)
-                print(Sensors.ULTRASONIC.filteredValue)
-                if Sensors.ULTRASONIC.rawValue < 14:
+                print(Sensors.ULTRASONIC.filteredValue, Sensors.IR_R.filteredValue)
+                if Sensors.ULTRASONIC.filteredValue < 20:
                     self.stop()
                     return True
             elif count < 20:
@@ -290,4 +296,4 @@ class Grabber:
 
 
 G = Grabber(ram)
-G.mainProcess('cube')
+G.mainProcess('basket')
