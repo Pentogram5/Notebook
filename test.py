@@ -5,7 +5,6 @@ from SC_advenced_movement import ram
 from SC_INS import *
 from advanced_camera.SC_CS import show_sm_point
 from SC_Gird_connect import *
-from advanced_camera.SC_detectors import get_objects
 
 
 tch = TopCameraHandler(0, framework=CamFrameWorks.testVideo, fake_img_update_period=2, use_undist=True,
@@ -91,8 +90,25 @@ while True:
     
     # update_speeds()
     # ram.set_speeds(20, 20)
-    print(tch.get_our_raw_position())
-    res = get_our_robot_pos_4(frame, results, 'red')
+    # res = tch.get_our_raw_position()
+    # print(res)
+    data = tch.get_objects()
+    # print(data)
+    res_sm = get_our_robot_pos_4_sm(frame, results, 'green') #fix
+    print("res_sm: ", res_sm)
+    res = get_our_robot_pos_4(frame, results, 'green') #fix
+    barriers = find_barriers(frame, results)  
+    min_path_to_cube = get_closest_PL(data, res_sm, barriers)
+    print('start')
+    print(min_path_to_cube)
+    print('end')
+    # for cube
+    if min_path_to_cube != 0:
+        for i in range(1, len(min_path_to_cube)):
+            frame = show_sm_line(frame, get_koeffs(results), min_path_to_cube[i - 1], min_path_to_cube[i])
+    
+    
+    
     if res is not None:
         x1, y1, x2, y2 = res
         p = ((x1 + x2) // 2, (y1 + y2) // 2)
@@ -118,5 +134,5 @@ while True:
     # #cv2.imshow('Video Stream', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
-    # time.sleep(1)
-    time.sleep(0.03)
+    time.sleep(2)
+    # time.sleep(0.03)

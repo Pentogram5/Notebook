@@ -173,11 +173,19 @@ def from_px_to_cm(pos, NW_SW_NE=((0, 0), (0, -1), (1, 0)), WIDTH=201, HEIGHT=210
     # Возвращаем результат в виде (x_sne, y_sne)
     return pos_sne_homogeneous[0] + 95, pos_sne_homogeneous[1] + 45
 
+
+def strange_pix2sm(koeffs, arr):
+    koef1, koef2, x_min, y_min = koeffs
+    x1, y1, x2, y2 = arr
+    x1, y1 = to_map_system(koeffs, x1, y1)
+    x2, y2 = to_map_system(koeffs, x2, y2)
+    return [x1, y1, x2, y2]
+
 def to_map_system(koeffs, x, y, sm = True):
     koef1, koef2, x_min, y_min = koeffs
 
     if sm:
-        return (x - x_min) * koef2 + 95, (y - y_min) * koef2 + 45
+        return (x - x_min) * koef1 + 95, (y - y_min) * koef2 + 45
 
     return x - x_min, y - y_min
 
@@ -188,7 +196,7 @@ def to_map_system_arr(koeffs, arr, sm = True):
     for point in arr:
         x, y = point
 
-        res.append([round((x - x_min) * koef2) + 95, round((y - y_min) * koef2) + 45])
+        res.append([round((x - x_min) * koef1) + 95, round((y - y_min) * koef2) + 45])
     
     return res
 

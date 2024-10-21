@@ -101,12 +101,6 @@ class Graph:
 
         self.add_object_to_node(cube2)
 
-    def get_node_our_robot(self, x, y):
-        for n in self.objects:
-            for i in range(0, len(self.objects[n])):
-                if self.objects[n][i]['center'] == (x, y):
-                    return n
-
     def set_node_properties(self, node, length, width, center_x, center_y):
         """
         Устанавливает длину, ширину и координаты центра для узла.
@@ -227,17 +221,17 @@ class Graph:
 
         return total_path[::-1]  # Возвращаем путь в прямом порядке (от начальной до целевой вершины)
     
-    def reconstruct_path_to_aim(self, came_from, current):
+    def reconstruct_path_to_aim(self, path):
 
-        total_path = [current]
-        while current in came_from:
-            current = came_from[current]  
-            total_path.append(current)  
+        del path[0]
+        center_path = []
+        for cur_node in path:
+            for node, properties in self.node_properties.items():
+                if cur_node == node:
+                    center_x, center_y = properties['center']
+                    center_path.append((center_x, center_y))
 
-        total_path
-
-        del total_path[0]
-        return total_path 
+        return center_path 
     
     def return_node_coordinate(self):
         coordinates = []

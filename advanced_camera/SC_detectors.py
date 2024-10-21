@@ -95,9 +95,9 @@ class TopCameraHandler:
     cam1_url = "rtsp://Admin:rtf123@192.168.2.250/251:554/1/1"
     cam2_url = "rtsp://Admin:rtf123@192.168.2.251/251:554/1/1"
     def __init__(self, cam, framework=CamFrameWorks.cv2, fps_cam=30, fps_yolo=30, use_undist=True, fake_img_update_period=5,
-                 robot_color=RobotColors.RED,
+                 robot_color=RobotColors.GREEN,
                  stable_delay=0.3,
-                 camera_margin=(250,0,0,0)):
+                 camera_margin=(250,0,100,0)):
         self.framework = framework
         if   framework==CamFrameWorks.cv2:
             if cam==0:
@@ -238,7 +238,7 @@ class TopCameraHandler:
             self.tr_cam.sleep()
     
     def _predict(self, frame):
-        model = YOLO('best_nano.pt', verbose=False)
+        model = YOLO('best_v11.pt', verbose=False)
         # Получения предсказания и оценка задержки
         self.ts_inference.timestamp()
         res = model.predict(frame, verbose=False)
@@ -284,12 +284,13 @@ class TopCameraHandler:
         for result in self.results:
             boxes = result.boxes
             for box in boxes:
-                x1, y1, x2, y2 = map(int, box.xyxy.flatten().cpu().numpy())  # Convert to integers
+                box_arr = list(map(int, box.xyxy.flatten().cpu().numpy())) # Convert to integers
                 # score = box.conf.item()  # confidence score
                 cls = result.names[box.cls.int().item()]  # cls name
                 if cls not in obj_dict.keys():
                     obj_dict[cls] = []
-                obj_dict[cls].append([x1, y1, x2, y2])
+                
+                obj_dict[cls].append(strange_pix2sm(get_koeffs(self.results), box_arr))
         return obj_dict
 
 
