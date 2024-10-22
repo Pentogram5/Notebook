@@ -581,3 +581,32 @@ def is_open(frame, box):
     mean_black = np.mean(mask)
 
     return mean_black
+
+
+def is_indoor(results):
+    lx1 = 10e6
+    ly1 = 10e6
+    lx2 = 0
+    ly2 = 0
+    cx1 = 0
+    cy1 = 0
+    cx2 = 0
+    cy2 = 0
+    
+    for result in results:
+        boxes = result.boxes
+        for box in boxes:
+            x1, y1, x2, y2 = map(int, box.xyxy.flatten().cpu().numpy())
+            # score = box.conf.item()  # confidence score
+            cls = result.names[box.cls.int().item()]
+            if cls == 'cube':
+                cx1, cy1, cx2, cy2 = x1, y1, x2, y2
+            
+            if cls == 'labirint':
+                lx1 = min(lx1, x1)
+                ly1 = min(ly1, y1)
+                lx2 = max(lx2, x2)
+                ly2 = max(ly2, y2)
+    if cx1 > lx1 and cx2 < lx2 and cy1 > ly1 and cy2 < ly2:
+        return 1
+    return 0
