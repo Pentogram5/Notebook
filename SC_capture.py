@@ -180,7 +180,7 @@ class Grabber:
                         return True
                 print('sneak Cube', x, w)
                 print(Sensors.IR_R.filteredValue)
-            elif count < 10:
+            elif count < 100:
                 count += 1
             else:
                 break
@@ -202,7 +202,7 @@ class Grabber:
                 if Sensors.IR_R.filteredValue < 0.2:
                     self.stop()
                     return True
-            elif count < 20:
+            elif count < 100:
                 count += 1
             else:
                 break
@@ -223,7 +223,7 @@ class Grabber:
                 if Sensors.ULTRASONIC.filteredValue < 20:
                     self.stop()
                     return True
-            elif count < 20:
+            elif count < 100:
                 count += 1
             else:
                 break
