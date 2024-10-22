@@ -63,6 +63,13 @@ ins.start_updater()
 #     # Устанавливаем скорости моторов
 #     ram.set_speeds(v, w)
 
+def getBoxCenter(xyxy):
+        return [xyxy[0] + (xyxy[2] - xyxy[0]) / 2, xyxy[1] + (xyxy[3] - xyxy[1]) / 2]
+    
+def lenght(A, B):
+    print(A, B)
+    return ((A[0] - B[0]) ** 2 + (A[1] - B[1])**2) ** 0.5
+
 print('NIGGER')
 while True:
         
@@ -124,6 +131,7 @@ while True:
 
     robots = []
     accs = []
+    averageLenghtCubeToCenter = []
     for result in results:
         boxes = result.boxes  # Get bounding box outputs
         for box in boxes:
@@ -132,9 +140,13 @@ while True:
             cls = result.names[box.cls.int().item()]  # Class name
 
             if cls == 'cube':
-                x1, y1, x2, y2 = map(int, box.xyxy.flatten().cpu().numpy())  # Convert to integers
+                xyxy = list(map(int, box.xyxy.flatten().cpu().numpy()))  # Convert to integers
                 score = box.conf.item()  # Confidence score
                 cls = result.names[box.cls.int().item()]  # Class name
+                print(getBoxCenter(xyxy), list(frame.shape)[:-1])
+                averageLenghtCubeToCenter.append(lenght(getBoxCenter(xyxy), list(frame.shape)[:-1]))
+    print('==============', averageLenghtCubeToCenter)
+
 
 
 
