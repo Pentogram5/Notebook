@@ -1,6 +1,6 @@
 import keyboard
 # from SC_API_tcp import *
-from SC_API_sim import *
+from SC_API_tcp import *
 
 # Инициализация клиентов
 init_clients()

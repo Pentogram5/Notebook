@@ -10,6 +10,8 @@ IR_G, IR_R, IR_B, ULTRASONIC = get_constants()
 left_speed = 0
 right_speed = 0
 
+set_green_light()
+
 def update_speeds():
     global left_speed, right_speed
     
@@ -28,7 +30,7 @@ def update_speeds():
         left_speed -= 20
         right_speed += 20
     if keyboard.is_pressed('d'):  # Вправо
-        left_speed += 1
+        left_speed += 20
         right_speed -= 20
     
     if keyboard.is_pressed('q'):  # Вправо

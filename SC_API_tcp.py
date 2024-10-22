@@ -6,7 +6,8 @@ from SC_infrared import ScInfrared
 from SC_ultrasonic import ScUltrasonic
 from SC_utils import *
 
-SERVER_IP = '192.168.2.12'
+# SERVER_IP = '192.168.2.85'
+SERVER_IP = '192.168.245.178'
 PORT_SENSOR = 8081
 PORT_COMMAND = 8082
 PORT_ACTION = 8083

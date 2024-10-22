@@ -156,12 +156,13 @@ def max_sgn(a, max_val):
 class RobotAdvencedMovement:
     def __init__(self, rb=rb,
                  L=0.21, # Расстояние между центрами гусениц
-                 R_of_success=0.10, # В пределах какого радиуса считаем, что мы достигли заданной точки
-                 R_max=0.3, # Максимальный радиус поворота
+                 R_of_success=10, # В пределах какого радиуса считаем, что мы достигли заданной точки
+                 R_max=30, # Максимальный радиус поворота
                  fps = 20,
                  ins = None,
-                 tau = 0.1,      # Парампетр регулятора для поворота во время езды
-                 tau_fast = 0.5  # Параметр регулятора для быстрого разворота
+                 tau = 0.5,      # Парампетр регулятора для поворота во время езды
+                 tau_fast = 0.5,  # Параметр регулятора для быстрого разворота
+                 max_angle_speed = 60
                  ):
         self.rb = rb
         self.L = L
@@ -170,13 +171,13 @@ class RobotAdvencedMovement:
         self.w = 0
         self.R_max = R_max
         
-        self.eps_angles = 5
+        self.eps_angles = 10
         self.eps_rate = 5
         
         self.filter = MEAN_STD()
         
         # Параметры регулятора
-        self.max_angle_speed = 90
+        self.max_angle_speed = max_angle_speed 
         self.max_speed = self.rb.max_speed
         self.tau      = tau # Rate tau
         self.tau_fast = tau_fast
@@ -185,6 +186,7 @@ class RobotAdvencedMovement:
         self.ts = TimeStamper()
         
         self.tr_points = ThreadRate(fps)
+        self.tr_move   = ThreadRate(fps)
         
         # Параметры логики
         self.current_action = RobotActions.IDLE
@@ -250,6 +252,55 @@ class RobotAdvencedMovement:
             # print(rms)
         else:
             rms = 0
+        self.rb.set_speed_cms_left(lms)
+        self.rb.set_speed_cms_right(rms)
+        
+        self.ts = TimeStamper()
+    
+
+    def set_speeds_propper(self,
+                   v, # cm/s
+                   w  # deg/s.
+                   ):
+        w = m.radians(w) * max(1,(0.3*abs(v)/10)) # speed correction
+        # print(max(1,(abs(v)/10)))
+        dv = w*self.L*100
+        v_res = v
+        lms = v + dv/2
+        rms = v - dv/2
+        # print(abs(v+dv/2), abs(v-dv/2), self.rb.max_speed)
+        if (abs(v+dv/2) < self.rb.max_speed) and (abs(v-dv/2) < self.rb.max_speed):
+            lms = v + dv/2
+            rms = v - dv/2
+        else:
+            if v>0:
+                v_res -= abs(dv)/2
+                lms = v + min(0, dv)
+                rms = v + min(0, -dv)
+            else:
+                v_res += abs(dv)/2
+                lms = v - min(0, -dv)
+                rms = v - min(0, dv)
+        
+        self.v = v_res
+        self.w = w
+        
+        # print(lms, rms)
+        eps = 0.1
+        if abs(lms)>eps:
+            lms_abs = abs(lms)
+            lms_sgn = sgn(lms)
+            lms = lms_sgn * max(0, lms_abs)
+        else:
+            lms = 0
+        if abs(rms)>eps:
+            rms_abs = abs(rms)
+            rms_sgn = sgn(rms)
+            rms = rms_sgn * max(0, rms_abs)
+            # print(rms)
+        else:
+            rms = 0
+        # print(lms, rms)
         self.rb.set_speed_cms_left(lms)
         self.rb.set_speed_cms_right(rms)
         
@@ -325,32 +376,64 @@ class RobotAdvencedMovement:
         x, y, angle = self.get_pos_rot()
         dt = self.ts.timestamp()
         while self.current_action == RobotActions.MOVING_TO_POINT:
+            # x, y, angle = self.get_pos_rot()
+            # desired_angle = -get_angle((x,y), self.current_point)
+
+            # delta_angle = get_shortest_angle_path(angle, desired_angle)
+            # print(delta_angle, (x,y), self.current_point)
+            # # t = 1
+            # t = 2 / 2
+            # self.set_speeds(0, delta_angle/self.tau)
+            # time.sleep(t)
+            
+            # # dx, dy = x-self.current_point[0], y-self.current_point[1]
+            # # l = (dx**2 + dy**2)**0.5
+            # # self.set_speeds(l/t, 0)
+            # # t = 0.25
+            # v = self.desired_speed / self.tau
+            # self.set_speeds(v, 0)
+            # time.sleep(t)
+
+
             dt = self.ts.timestamp()
             # print(get_distance((x,y), self.current_point))
             x, y, angle = self.get_pos_rot()
             v = self.desired_speed
             desired_angle = -get_angle((x,y), self.current_point)
+            dx, dy = x-self.current_point[0], y-self.current_point[1]
+            # v = float(v*(dx**2 + dy**2)**0.5/100)
             
             # Поиск требуемового yaw rate
             delta_angle = get_shortest_angle_path(angle, desired_angle)
             yaw_rate = delta_angle / self.tau
             yaw_rate = min_sgn(yaw_rate, self.max_angle_speed)
+            # delta_angle, angle, desired_angle, 
+            #!!!
+            print(delta_angle, angle, desired_angle, (x, y), (x-self.current_point[0],y-self.current_point[1]))
             
-            # Фильтрация данных на основании минимального радиуса поворота
-            R = 0
-            if (abs(yaw_rate)>self.eps_rate) and (abs(delta_angle) > self.eps_angles):
-                #!!! print(v, yaw_rate, dt)
-                R_non_abs = self.filter.filter(v/yaw_rate, dt)
-                R = abs(R_non_abs)
-            if R > self.R_max:
+            if abs(delta_angle) > self.eps_angles:
                 v = 0
+            # # Фильтрация данных на основании минимального радиуса поворота
+            # R = 0
+            # if (abs(yaw_rate)>self.eps_rate) and (abs(delta_angle) > self.eps_angles):
+            #     #!!! 
+            #     # print(type(v), v, yaw_rate, dt)
+            #     R_non_abs = self.filter.filter(v/yaw_rate, dt)
+            #     R = abs(R_non_abs)
+            # if R > self.R_max:
+            #     v = 0
             # if abs(yaw_rate) > self.max_angle_speed:
             #     v = 0
             
             w = yaw_rate
             #!!! print(R, v, w, delta_angle)
+            # self.set_speeds(v, w)
             self.set_speeds(v, w)
-            self.tr.sleep()
+            # self.set_speeds(0, w)
+            # self.set_speeds(v, 0)
+            # self.tr.sleep()
+            # self.set_speeds(0, w)
+            # self.tr.sleep()
             
             # print(get_distance((x,y), self.current_point), self.current_point)
             
@@ -358,6 +441,7 @@ class RobotAdvencedMovement:
             if get_distance((x,y), self.current_point) <= self.R:
                 # Если достигли точки, то что делаем?
                 if self.on_done == OnDoneActions.WAIT:
+                    self.set_speeds(0, 0)
                     self.current_action = RobotActions.IDLE
                     old_time = time.time()
                     while time.time()-old_time < self.new_command_timeout:
@@ -395,6 +479,7 @@ class RobotAdvencedMovement:
                     print('I AM STOPPED')
                     self.set_speeds(0, 0)
                     break
+        self.tr_move.sleep()
                     
                         
                 
@@ -408,6 +493,9 @@ ram = RobotAdvencedMovement()
 def main_test_wasd():
     import keyboard
 
+
+    ram = RobotAdvencedMovement(max_angle_speed=90)
+
     # Инициализация клиентов
     init_clients()
     IR_G, IR_R, IR_B, ULTRASONIC = get_constants()
@@ -418,16 +506,24 @@ def main_test_wasd():
         # Обнуляем скорости
         v = 0
         w = 0
+
+        # v w real_w
+        # 10 90 w
+        # 20 90 w
+        # 30 90 w/3 if v>30: w=
+        # 50 90 w/6
+
+        # 50 90
         
         # Проверяем нажатие клавиш и обновляем скорости
         if keyboard.is_pressed('w'):  # Вперед
-            v += 36
+            v += 50
         if keyboard.is_pressed('s'):  # Назад
-            v -= 36
+            v -= 50
         if keyboard.is_pressed('a'):  # Влево
-            w -= 60
+            w -= 90
         if keyboard.is_pressed('d'):  # Вправо
-            w += 60
+            w += 90
             
         # print(left_speed, right_speed)
         
@@ -444,7 +540,7 @@ def main_test_wasd():
     try:
         while True:
             # IR_G, IR_R, IR_B, ULTRASONIC = get_constants()
-            print(Sensors.IR_G)
+            # print(Sensors.IR_G)
             update_speeds()
             # print(IR_R)
             # print(get_our_position_rotation())
@@ -503,4 +599,4 @@ def main_test_input():
 if __name__=='__main__':
     # main_test_move_to_target()
     # main_test_wasd()
-    main_test_input()
+    main_test_wasd()

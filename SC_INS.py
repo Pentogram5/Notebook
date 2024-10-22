@@ -179,6 +179,8 @@ class INS:
         
         self._position = np.array((0,0))
         self._yaw      = 0
+        self.pos_eps   = 10
+        self.bad_yaw   = False
         
         self.summary_position = np.array((0,0))
         self.summary_yaw      = 0
@@ -192,11 +194,16 @@ class INS:
         self.tr_speed = ThreadRate(speed_update_rate)
         self.tr_pos   = ThreadRate(speed_update_rate)
         self.tr_yaw   = ThreadRate(speed_update_rate)
+
+        self.old_pos = np.array([0.0, 0.0])
                     
         # # Wheights of sources
         # self.P_of_pos_predict = 0.5
         # self.P_of_yaw_predict = 0.5
         self.kalman_filter = KalmanFilter_PosYaw(update_rate=speed_update_rate)
+
+        self.v = 0
+        self.w = 0
     
     def start_updater(self):
         self.th_pos = threading.Thread(target=self._update_pos)
@@ -248,8 +255,14 @@ class INS:
         
         summary_position = self._position + self.pos_integrator.S
         summary_yaw      = self._yaw      + self.yaw_integrator.S
+
+        self.v = v
+        self.w = w
         
-        summary_position, summary_yaw = self.kalman_filter.update_current_state(summary_position, V, summary_yaw, w)
+        # summary_position, summary_yaw = self.kalman_filter.update_current_state(summary_position, V, summary_yaw, w)
+        # summary_yaw = self._yaw
+        summary_position = self._position
+        summary_yaw      = self._yaw
         
         self.summary_position, self.summary_yaw = summary_position, float(summary_yaw)
         
@@ -264,6 +277,17 @@ class INS:
         # Calculate real position
         # real_pos = predicted_pos*self.P_of_pos_predict + measured_pos*(1-self.P_of_pos_predict)
         real_pos = measured_pos
+
+        _yaw = get_angle(self.old_pos, real_pos)
+        if self.v < 0:
+            _yaw = -_yaw
+        if ((self.old_pos[0]-real_pos[0])**2 + (self.old_pos[1]-real_pos[1])**2)**0.5 > self.pos_eps:
+            self._yaw = _yaw
+            self.bad_yaw = False
+        else:
+            self.bad_yaw = True
+
+        self.old_pos = real_pos
         
         # print(time.time()-measured_time)
         # Update position
@@ -274,21 +298,22 @@ class INS:
     def update_yaw(self, yaw, measured_time):
         # Get available predictions of position
         # predicted_yaw = self.get_past_yaw(measured_time)
-        measured_yaw  = yaw
-        
-        # Calculate real position
-        # real_yaw = predicted_yaw*self.P_of_yaw_predict + measured_yaw*(1-self.P_of_yaw_predict)
-        real_yaw = measured_yaw
-        
-        # print('measured_time', measured_time)
-        # Update position
-        self.last_yaw_update_time = measured_time
-        # try:
-        #     print('times',time.time()-self.yaw_integrator.fifo_dS_data[-5][1], self.yaw_integrator.fifo_dS_data[-5][1]-self.last_yaw_update_time, )
-        # except:
-        #     pass
-        self.yaw_integrator.clear_old_data(self.last_yaw_update_time)
-        self._yaw = real_yaw
+        if self.bad_yaw:
+            measured_yaw  = yaw
+            
+            # Calculate real position
+            # real_yaw = predicted_yaw*self.P_of_yaw_predict + measured_yaw*(1-self.P_of_yaw_predict)
+            real_yaw = measured_yaw
+            
+            # print('measured_time', measured_time)
+            # Update position
+            self.last_yaw_update_time = measured_time
+            # try:
+            #     print('times',time.time()-self.yaw_integrator.fifo_dS_data[-5][1], self.yaw_integrator.fifo_dS_data[-5][1]-self.last_yaw_update_time, )
+            # except:
+            #     pass
+            self.yaw_integrator.clear_old_data(self.last_yaw_update_time)
+            self._yaw = real_yaw
         
     
     def clear(self):

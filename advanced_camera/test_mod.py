@@ -35,6 +35,7 @@ def get_img_and_res(frame, results):
     # #results = model2(frame)
     # results = model1(frame)
     # results = model3(frame)
+    x1, y1, x2, y2 = 0, 0, 1, 1
     for result in results:
         boxes = result.boxes  # Get bounding box outputs
         for box in boxes:

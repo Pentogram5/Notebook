@@ -1,3 +1,5 @@
+import os
+os.add_dll_directory("C:\\gstreamer\\1.0\\mingw_x86_64\\bin")
 import cv2
 
 from .SC_get_direction import *
@@ -25,10 +27,11 @@ class CamFrameWorks:
     testCam = 2
     testFiles = 3
     testVideo = 4
+    cv2_man = 5
 
 class RobotColors:
-    RED = 0
-    GREEN = 1
+    RED = 'red'
+    GREEN = 'green'
 
 class FileCamera:
     def __init__(self, folder='./new9/*', T=5):
@@ -90,10 +93,74 @@ VIDEO_TEST_PATH = ""
 def thread_safe_predict(image_path):
     ...
 
+class RTSPReaderParallel:
+    def __init__(self,url,fps_max=30):
+        self.cam = cv2.VideoCapture(url)
+        self.tr = ThreadRate(fps_max)
+        self.frame = None
+        self.th = threading.Thread(target=self._read)
+        self.th.start()
+    
+    @staticmethod
+    def VideoCapture(*args, **kwargs):
+        return RTSPReaderParallel(*args, **kwargs)
+    
+    def _read(self):
+        while True:
+            ret, self.frame = self.cam.read()
+            self.tr.sleep()
+            # print(self.frame)
+    
+    def read(self):
+        return self.frame is not None, self.frame
+
+
+class Filter:
+    def cast(self, arr):
+        if not isinstance(arr, (list, tuple)):
+            arr = (arr,)
+        assert all(isinstance(a, (int, float)) for a in arr), "Unsupported data type"
+        return arr
+
+class STD(Filter):
+    def __init__(self, fifo_n=20, std_dev=1.0):
+        self.fifo = []
+        self.fifo_n = fifo_n
+        self.std_dev = std_dev  # Константа стандартного отклонения
+
+    def filter(self, arr):
+        # Приведение к нужному типу
+        arr = self.cast(arr)
+        np_arr = np.array(arr)
+
+        # Проверка на наличие элементов в FIFO
+        if len(self.fifo) > min(self.fifo_n//2, 0):
+            mean = np.mean(self.fifo, axis=0)
+
+            # Проверка на отклонение
+            if np.any(np.abs(np_arr - mean) > self.std_dev):
+                self.fifo.append(np_arr)  # Записываем текущее значение в буфер
+                return self.fifo[-1]  # Возвращаем последний элемент из буфера
+            else:
+                if len(self.fifo) > self.fifo_n:
+                    self.fifo.pop(0)  # Удаляем старые значения из буфера
+                return np_arr  # Возвращаем текущее значение
+        else:
+            # Если буфер пустой, просто добавляем текущее значение
+            self.fifo.append(np_arr)
+            return np_arr
+
+    def clear(self):
+        self.fifo.clear()
+
+    
+
 class TopCameraHandler:
     # Handles actions of top camera
     cam1_url = "rtsp://Admin:rtf123@192.168.2.250/251:554/1/1"
     cam2_url = "rtsp://Admin:rtf123@192.168.2.251/251:554/1/1"
+    cam3_url = 'rtsp://192.168.245.213:8080/h264_ulaw.sdp'
+    gst = 'rtspsrc location={} latency=0 ! rtph264depay ! h264parse ! decodebin ! videoconvert ! video/x-raw,format=BGR ! appsink drop=1'
     def __init__(self, cam, framework=CamFrameWorks.cv2, fps_cam=30, fps_yolo=30, use_undist=True, fake_img_update_period=5,
                  robot_color=RobotColors.RED,
                  stable_delay=0.3,
@@ -101,9 +168,11 @@ class TopCameraHandler:
         self.framework = framework
         if   framework==CamFrameWorks.cv2:
             if cam==0:
-                self.cam = cv2.VideoCapture(TopCameraHandler.cam1_url)
-            else:
-                self.cam = cv2.VideoCapture(TopCameraHandler.cam2_url)
+                self.cam = RTSPReaderParallel.VideoCapture(TopCameraHandler.cam1_url)
+            elif cam==1:
+                self.cam = RTSPReaderParallel.VideoCapture(TopCameraHandler.cam2_url)
+            elif cam==2:
+                self.cam = RTSPReaderParallel.VideoCapture(TopCameraHandler.cam3_url)
         elif framework==CamFrameWorks.gst:
             self.cam = GstCam()
             self.cam.VideoCapture(cam)
@@ -114,6 +183,13 @@ class TopCameraHandler:
             self.cam = FileCamera(T=fake_img_update_period)
         elif framework==CamFrameWorks.testVideo:
             self.cam = VideoCamera()
+        elif framework==CamFrameWorks.cv2_man:
+            if cam==0:
+                self.cam = cv2.VideoCapture(TopCameraHandler.gst.format(TopCameraHandler.cam1_url))
+            elif cam==1:
+                self.cam = cv2.VideoCapture(TopCameraHandler.gst.format(TopCameraHandler.cam2_url))
+            elif cam==2:
+                self.cam = cv2.VideoCapture(TopCameraHandler.gst.format(TopCameraHandler.cam3_url))
         self.frame, self.timestamp = None, 0
         self.last_processed_frame = None
         
@@ -123,11 +199,11 @@ class TopCameraHandler:
         camera_margin = self.camera_margin
         while not ret:
             ret, frame = self.cam.read()
-            h, w = frame.shape[:2]
-            x1, y1 = 0, 0
-            x2, y2 = w, h
-            x1,y1,x2,y2 = x1+camera_margin[0], y1+camera_margin[1], x2-camera_margin[0]-camera_margin[2], y2-camera_margin[1]-camera_margin[3]
-            self.frame = frame[y1:y2, x1:x2]
+        h, w = frame.shape[:2]
+        x1, y1 = 0, 0
+        x2, y2 = w, h
+        x1,y1,x2,y2 = x1+camera_margin[0], y1+camera_margin[1], x2-camera_margin[0]-camera_margin[2], y2-camera_margin[1]-camera_margin[3]
+        self.frame = frame[y1:y2, x1:x2]
         
         self.robot_color = robot_color
 
@@ -162,6 +238,9 @@ class TopCameraHandler:
         self.last_yaw_update_ts = 0
         
         self.koefs = [1, 1, 0, 0]
+
+        self.std_filter = STD(std_dev=50)
+        self.std_yaw_filter = STD(std_dev=20)
     
     def get_position_with_ts_correction(self):
         pos, ts = self.get_our_raw_position()
@@ -302,19 +381,21 @@ class TopCameraHandler:
         ts = self.timestamp_yolo
         try:
 
-            robot_pos = get_our_robot_pos_4(self.frame, self.results, self.robot_color)
+            robot_pos = self.std_filter.filter(get_our_robot_pos_4(self.frame, self.results, self.robot_color))
             if robot_pos is None:
                 return None, ts
 
             x1, y1, x2, y2 = robot_pos
 
             px_px, py_px = (x2 + x1) // 2, (y2 + y1) // 2
-            self.koefs = get_koeffs(self.results)
-            x, y = to_map_system(get_koeffs(self.results), px_px, py_px)
+            # self.koefs = get_koeffs(self.results)
+            # x, y = to_map_system(get_koeffs(self.results), px_px, py_px)
+
             # NW_SW_NE=get_NW_SW_NE(self.results)
             # # print(px_px, py_px, NW_SW_NE)
             # x, y = from_px_to_cm((px_px, py_px), NW_SW_NE=NW_SW_NE)
-            return np.array([x, y]), ts
+            # return np.array([x, y]), ts
+            return np.array([px_px, py_px]), ts
         except Exception as ex:
             # print('get_our_raw_position exception', ex)
             time.sleep(0.1)
@@ -327,7 +408,7 @@ class TopCameraHandler:
         # - timestamp с которых их получили
         # 0  градусов соответствует +Ox
         # 90 градусов соответствует +Oy
-        # ts = self.timestamp_yolo
+        ts = self.timestamp_yolo
         angle_deg = None
 
         ts = self.timestamp_yolo
@@ -340,7 +421,8 @@ class TopCameraHandler:
             # # Преобразуем радианы в градусы
             # # Корректируем угол
             # angle_deg = (angle_deg + 180) % 360
-            angle_deg = get_angle((x1,y1), (x2,y2))
+            angle_deg = 360-get_angle((x1,y1), (x2,y2))
+            # print(angle_deg)
             return angle_deg, ts
         except Exception as ex:
             # print('_get_our_raw_rotation exception', ex)

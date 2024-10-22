@@ -69,8 +69,10 @@ def get_koeffs(results):
     #     if x < SW[0] and y > SW[1]:
     #         SW = (x, y)
 
-    WIDTH = 201
-    HEIGHT = 210
+    # WIDTH = 201
+    # HEIGHT = 210
+    WIDTH  = 92
+    HEIGHT = 95
     koef1 = WIDTH / (x_max - x_min)
     koef2 = HEIGHT / (y_max - y_min)
     # print(koef1, koef2)
@@ -236,10 +238,23 @@ def sm2pix_point_arr(koeffs, arr):
 
 
 def show_sm_point(frame, koeffs, point, color=(0, 255, 255)):
-   x_c, y_c = sm2pix_point(koeffs, point)
-   cv2.circle(frame, (x_c, y_c), 3, color, 3)
+    x_c, y_c = sm2pix_point(koeffs, point)
+    try:
+        cv2.circle(frame, (x_c, y_c), 3, color, 3)
+    except Exception as ex:
+        # print('show_sm_point error', ex)
+        pass
 
-   return frame
+    return frame
+
+def show_px_point(frame, point, color=(0,255,255)):
+    try:
+        cv2.circle(frame, point, 3, color, 3)
+    except Exception as ex:
+        print('show_px_point error', ex)
+        pass
+
+    return frame
 
 
 def show_sm_line(frame, koeffs, point1, point2):

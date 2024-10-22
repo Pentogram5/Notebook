@@ -344,6 +344,11 @@ def get_our_robot_pos_3(frame, results, col):
         return clr2[1]
 
 
+# global green_robot_pos
+# green_robot_pos = None
+# global red_robot_pos
+
+# def metric(color)
 def get_our_robot_pos_4(frame, results, col):
     robots = []
     accs = []
@@ -413,6 +418,21 @@ def get_our_robot_pos_4(frame, results, col):
 
     clr1 = clrs[0]
     clr2 = clrs[1]
+    # max_c = -1
+    # robot = clrs[0][1]
+    # # sn = 1 if col=='red' else -1
+    # for clr in clrs:
+    #     colorfullness = clr[2]
+    #     if col=='red':
+    #         if (colorfullness>max_c) and clr[0]==col:
+    #             max_c = colorfullness
+    #             robot = clrs[1]
+    #     else:
+    #         if (colorfullness<max_c) and clr[0]==col:
+    #             max_c = colorfullness
+    #             robot = clrs[1]
+    # print(col, robot)
+    # return robot
     if clr2[2] > clr1[2]:
         clr2[0] = 'red'
         clr1[0] = 'green'

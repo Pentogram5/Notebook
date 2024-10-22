@@ -10,9 +10,10 @@ from .windowsing import *
 class GstCam:
     cam1 = 'rtsp://Admin:rtf123@192.168.2.250/251:554/1/1'
     cam2 = 'rtsp://Admin:rtf123@192.168.2.251/251:554/1/1'
+    cam3 = 'rtsp://192.168.245.213:8080/h264_ulaw.sdp'
     command = 'gst-launch-1.0 rtspsrc location={} latency=0 ! decodebin ! autovideosink'
 
-    def __init__(self, w=1391+250, h=934, fps=60, margin=(20,50,20,20)):
+    def __init__(self, w=1391+250, h=934, fps=30, margin=(20,50,200,100)):
         # l,t,r,b
         self.win_name = "Direct3D11 renderer"
         self.camera = None
@@ -22,6 +23,7 @@ class GstCam:
         self.margin = margin
 
     def _run_cam(self, c):
+        cam = ''
         if c == -1:
             os.system("gst-launch-1.0 videotestsrc ! videoconvert ! autovideosink")
             return None
@@ -29,6 +31,9 @@ class GstCam:
             cam = GstCam.cam1
         elif c == 1:
             cam = GstCam.cam2
+        elif c == 2:
+            cam = GstCam.cam3
+            os.system('gst-launch-1.0 rtspsrc location=rtsp://192.168.245.213:8080/h264_ulaw.sdp latency=0 ! rtph264depay ! h264parse ! decodebin ! autovideosink')
         os.system(self.command.format(cam))
 
     def VideoCapture(self, cam):
