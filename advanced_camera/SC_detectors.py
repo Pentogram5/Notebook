@@ -52,7 +52,7 @@ class FileCamera:
 # trtrtrttttyyyy.mp4
 # trtrtrt.mp4
 class VideoCamera:
-    def __init__(self, path="./new9/trtrtrttttyyyy.mp4"):
+    def __init__(self, path="./new9/trtrtrt.mp4"):
         # Инициализация видеокамеры
         self.video = cv2.VideoCapture(path)
         if not self.video.isOpened():

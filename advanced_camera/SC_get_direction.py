@@ -493,3 +493,53 @@ def is_open(frame, box):
     mean_black = np.mean(mask)
 
     return mean_black
+
+class Robot:
+    def __init__(self, color, isUs, center):
+        self.color = color
+        self.isUs = isUs
+        self.center = center
+    
+    def getBoxCenter(self, xyxy):
+        return [xyxy[0] + (xyxy[2] - xyxy[0]) / 2, xyxy[1] + (xyxy[3] - xyxy[1]) / 2]
+    
+    def lenght(self, A, B):
+        print(A, B)
+        return ((A[0] - B[0]) ** 2 + (A[1] - B[1])**2) ** 0.5
+    
+    def newFrame(self, frame, results):
+        robots = []
+        accs = []
+
+        for result in results:
+            boxes = result.boxes
+            for box in boxes:
+                score = box.conf.item()  # Confidence score
+                cls = result.names[box.cls.int().item()]  # Class name
+                if cls == 'robot':
+                    robots.append(list(map(int, box.xyxy.flatten().cpu().numpy())))  # Convert to integers)
+                    accs.append(score)
+
+        sorted_indices = sorted(range(len(accs)), key=lambda i: accs[i], reverse=True)
+        # Step 2: Create sorted arrays using the sorted indices
+        sorted_array = [accs[i] for i in sorted_indices]
+        sorted_consequence_array = [robots[i] for i in sorted_indices]
+        min = 100000
+        newCenter = []
+        for robot in sorted_consequence_array:
+            center = self.getBoxCenter(robot)
+            l = self.lenght(center, self.center)
+            if l < min and l < 200: #SET!!!
+                newCenter = center
+                min = l
+        if newCenter:
+            self.center = [int(newCenter[0]), int(newCenter[1])]
+
+
+
+
+def findNewRobotCenter(robots, frame, results):
+    for robot in robots:
+        robot.newFrame(frame, results)
+        print(robot.color, robot.center)
+    
