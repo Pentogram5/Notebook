@@ -85,6 +85,16 @@ class Average:
         return self.average
 
 
+def getXofObject_complex(objClass):
+    x, conf = getXofObject(objClass)
+    y, confy = getXofObject('sphere')
+    if x:
+        ...
+    elif (y) and objClass=='cube':
+        x = y
+        conf = confy
+    return x, conf
+
 class Grabber:
     image_w = 640
     image_h = 480
@@ -117,7 +127,7 @@ class Grabber:
         beginTime = time.time()
         spinTime = time.time()
         spinDelta = 3
-        speed = 50
+        speed = 30
         while time.time() - beginTime < 30:
             _, conf = getXofObject(objClass)
             averageConf = A(conf)
@@ -162,13 +172,19 @@ class Grabber:
         count = 0
         beginTime = time.time()
         beginSensorState = Sensors.IR_R.filteredValue > 0.5
-        while time.time() - beginTime < 30:
+        # time.time() - beginTime < 30
+        while True:
             x, conf = getXofObject(objClass)
+            print()
+            print()
+            print(x)
+            print()
+            print()
             if x:
                 count = 0
                 w = pid(x)
                 if beginSensorState:
-                    self.ram.set_speeds(6, w)
+                    self.ram.set_speeds(5, w)
                     if Sensors.IR_R.filteredValue < 0.2:
                         self.stop()
                         return True
@@ -219,7 +235,7 @@ class Grabber:
                 self.ram.set_speeds(6, w)
                 print('sneak Basket', x, w, Sensors.ULTRASONIC.filteredValue)
                 print(Sensors.ULTRASONIC.filteredValue, Sensors.IR_R.filteredValue)
-                if Sensors.ULTRASONIC.filteredValue < 20:
+                if Sensors.ULTRASONIC.filteredValue < 15:
                     self.stop()
                     return True
             elif count < 100:
@@ -272,6 +288,7 @@ class Grabber:
             else:
                 result = self.put()
 
+        # self.ram.set_
         
         # if result:
         #     getXofObject(objClass)
