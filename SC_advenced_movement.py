@@ -409,7 +409,7 @@ class RobotAdvencedMovement:
             yaw_rate = min_sgn(yaw_rate, self.max_angle_speed)
             # delta_angle, angle, desired_angle, 
             #!!!
-            print(delta_angle, angle, desired_angle, (x, y), (x-self.current_point[0],y-self.current_point[1]))
+            # print(delta_angle, angle, desired_angle, (x, y), (x-self.current_point[0],y-self.current_point[1]))
             
             if abs(delta_angle) > self.eps_angles:
                 v = 0

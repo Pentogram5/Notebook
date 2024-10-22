@@ -55,7 +55,7 @@ class FileCamera:
 # trtrtrttttyyyy.mp4
 # trtrtrt.mp4
 class VideoCamera:
-    def __init__(self, path="./new9/trtrtrttttyyyy.mp4"):
+    def __init__(self, path="./new9/trtrtrt.mp4"):
         # Инициализация видеокамеры
         self.video = cv2.VideoCapture(path)
         if not self.video.isOpened():
@@ -241,6 +241,14 @@ class TopCameraHandler:
 
         self.std_filter = STD(std_dev=50)
         self.std_yaw_filter = STD(std_dev=20)
+
+
+        self.robots = [
+            Robot('green', True, []),
+            Robot('red', False, [])
+        ]
+
+        self.robot_pos = None
     
     def get_position_with_ts_correction(self):
         pos, ts = self.get_our_raw_position()
@@ -331,6 +339,22 @@ class TopCameraHandler:
         # Запись результатов
         self.results = res
         self.koefs = get_koeffs(self.results)
+
+        print('RESULTS',self.results)
+        # if self.results is not None:
+        #     # print(self.robots)
+        #     for robot in self.robots:
+        #         if not robot.center:
+        #             pos = get_our_robot_pos_4(frame, self.results, robot.color)
+        #             if pos:
+        #                 print('add pos', pos)
+        #                 robot.center = robot.getBoxCenter(pos)
+        #         else:
+        #             robot.newFrame(frame, self.results)
+        #             # print(robot.color, robot.center)
+        #             # cv2.circle(frame, robot.center, radius=10, color=(0, 0, 255),thickness=5)
+        #         if robot.color == self.robot_color:
+        #             self.robot_pos = np.array(robot.center)
         
         # Сохранение времени последнего обработанного изображения, чтобы проверить на изменения в изображении
         self.last_timestamp_yolo = self.timestamp_yolo
@@ -381,21 +405,23 @@ class TopCameraHandler:
         ts = self.timestamp_yolo
         try:
 
-            robot_pos = self.std_filter.filter(get_our_robot_pos_4(self.frame, self.results, self.robot_color))
-            if robot_pos is None:
-                return None, ts
+            # robot_pos = self.std_filter.filter(get_our_robot_pos_4(self.frame, self.results, self.robot_color))
+            # robot_pos = None
+            # if robot_pos is None:
+            # print(self.robot_pos)
+            return self.robot_pos, ts
 
-            x1, y1, x2, y2 = robot_pos
+            # x1, y1, x2, y2 = robot_pos
 
-            px_px, py_px = (x2 + x1) // 2, (y2 + y1) // 2
-            # self.koefs = get_koeffs(self.results)
-            # x, y = to_map_system(get_koeffs(self.results), px_px, py_px)
+            # px_px, py_px = (x2 + x1) // 2, (y2 + y1) // 2
+            # # self.koefs = get_koeffs(self.results)
+            # # x, y = to_map_system(get_koeffs(self.results), px_px, py_px)
 
-            # NW_SW_NE=get_NW_SW_NE(self.results)
-            # # print(px_px, py_px, NW_SW_NE)
-            # x, y = from_px_to_cm((px_px, py_px), NW_SW_NE=NW_SW_NE)
-            # return np.array([x, y]), ts
-            return np.array([px_px, py_px]), ts
+            # # NW_SW_NE=get_NW_SW_NE(self.results)
+            # # # print(px_px, py_px, NW_SW_NE)
+            # # x, y = from_px_to_cm((px_px, py_px), NW_SW_NE=NW_SW_NE)
+            # # return np.array([x, y]), ts
+            # return np.array([px_px, py_px]), ts
         except Exception as ex:
             # print('get_our_raw_position exception', ex)
             time.sleep(0.1)
@@ -413,8 +439,11 @@ class TopCameraHandler:
 
         ts = self.timestamp_yolo
         try:
-            robot_pos = get_our_robot_pos_4(self.frame, self.results, self.robot_color)
-            robot_dir, _, _ = get_direction_for_one(self.frame, robot_pos, (0, 0, 0, 0))
+            # robot_pos = get_our_robot_pos_4(self.frame, self.results, self.robot_color)
+            if self.robot_pos is None:
+                time.sleep(0.1)
+                return None, ts
+            robot_dir, _, _ = get_direction_for_one(self.frame, self.robot_pos, (0, 0, 0, 0))
             x1, y1, x2, y2 = robot_dir
 
             # angle_rad = math.atan2(y2 - y1, x2 - x1)
