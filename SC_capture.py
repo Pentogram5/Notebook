@@ -105,7 +105,6 @@ class Grabber:
     currentState = None
 
     def __init__(self, ram):
-        init_clients()
         self.ram = ram
         self.currentState = 1
     

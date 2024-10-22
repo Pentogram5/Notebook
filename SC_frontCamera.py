@@ -12,7 +12,7 @@ class WebCamera:
         self.res = None
         self.th = None
         # ЗДЕСЬ ИНИЦИАЛИЗИРУЙ КАМЕРУ
-        self.cam = cv2.VideoCapture('http://192.168.245.178:8080/?action=stream')
+        self.cam = cv2.VideoCapture('http://192.168.2.85:8080/?action=stream')
         self.tr = ThreadRate(max_fps)
     
     def start_capturing_image(self):

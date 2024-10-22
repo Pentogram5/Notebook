@@ -6,7 +6,7 @@ from SC_infrared import ScInfrared
 from SC_ultrasonic import ScUltrasonic
 from SC_utils import *
 
-SERVER_IP = '192.168.245.178'
+SERVER_IP = '192.168.2.85'
 PORT_SENSOR = 8081
 PORT_COMMAND = 8082
 PORT_ACTION = 8083
@@ -135,6 +135,12 @@ def perform_action_capture():
 
 def perform_action_throw_to_basket():
     send_action("perform_action_throw_to_basket")
+
+def set_red_light():
+    send_action("set_red_light")
+    
+def set_green_light():
+    send_action("set_green_light")
 
 ts = TimeStamper()
 def main():

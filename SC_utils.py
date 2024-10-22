@@ -1,6 +1,8 @@
 import math
 import time
 
+import numpy as np
+
 def get_distance(p1, p2):
     """
     Вычисляет расстояние между двумя точками p1 и p2.
@@ -112,6 +114,49 @@ class ThreadRate:
     def sleep(self):
         sleep_time = max(self._period - self.ts.timestamp(), 0)
         time.sleep(sleep_time)
+
+
+class Filter:
+    def cast(self, arr):
+        if not (type(arr) in (list, tuple)):
+            arr = (arr,)
+        assert all([type(a) in (int, float) for a in arr]), "Unsupported data type"
+        return arr
+
+# Just returns the mean
+class MEAN(Filter):
+    def __init__(self, fifo_n=20):
+        self.fifo = []
+        self.fifo_n = fifo_n
+
+    def filter(self, arr):
+        # Casting
+        arr = self.cast(arr)
+        np_arr = np.array(arr)
+        self.fifo.append(arr)
+        # Finding array parameters
+        mean = np.mean(self.fifo, axis=0)
+        np_arr = mean
+        # Append to array
+
+        # Check for data trust
+        if len(self.fifo) > self.fifo_n:
+            # print(self.fifo,'DEL')
+            del self.fifo[0]
+            # We can trust the datas
+            return type(arr)(np_arr)
+        else:
+            # We can't, return at least mean
+            return type(arr)(mean)
+
+    def clear(self):
+        del self.fifo
+        self.fifo = []
+
+class UpdateSourceModified:
+    def __init__(self, get_measured_pos=..., get_measured_yaw=...):
+        self.get_measured_pos = get_measured_pos
+        self.get_measured_yaw = get_measured_yaw
 
 # # Пример использования
 # angle1 = 90

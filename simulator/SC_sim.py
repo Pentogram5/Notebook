@@ -1,3 +1,4 @@
+import numpy as np
 import pygame
 import random
 import time
@@ -68,13 +69,33 @@ class Border:
 import pygame
 import math
 
-def draw_line(screen, p1, p2, off_x, off_y, s):
+def draw_line(screen, p1, p2, off_x, off_y, s, color=(255, 0, 0)):
     v1 = mul(s, add(p1, (off_x, off_y)))
     v2 = mul(s, add(p2, (off_x, off_y)))
-    pygame.draw.line(screen, (255, 0, 0), v1, v2, 2)
+    pygame.draw.line(screen, color, v1, v2, 2)
+
+global line_ps
+line_ps = ((0,0),(0,0))
+
+def draw_line1(p1, p2):
+    global line_ps
+    line_ps = (p1, p2)
+
+def draw_line1_advanced(color=(255, 0, 0)):
+    global screen
+    global field_offset_x
+    global field_offset_y
+    global s
+    global line_ps
+    if screen is None:
+        return
+    off_x, off_y = field_offset_x, field_offset_y
+    v1 = mul(s, add(line_ps[0], (off_x, off_y)))
+    v2 = mul(s, add(line_ps[1], (off_x, off_y)))
+    pygame.draw.line(screen, color, v1, v2, 2)
 
 class Tank:
-    def __init__(self, x, y, width=0.25, height=0.29, max_speed=0.36, track_width=0.21,
+    def __init__(self, x, y, width=0.25, height=0.29, max_speed=1, track_width=0.21,
                  mu=1, p=0, #p=0.2,
                  s=200,
                  off_x=0, off_y=0):
@@ -253,11 +274,16 @@ def get_constants():
     global IR_G, IR_R, IR_B, ULTRASONIC
     return IR_G, IR_R, IR_B, ULTRASONIC
 global tank
+tank = None
+
 def get_tank():
     global tank
     return tank
 
 def get_our_position_rotation():
+    global tank
+    if tank is None:
+        return 0, 0, 0
     return tank.x, tank.y, (m.degrees(tank.angle)-90) % 360
 
 def perform_action_throw_to_basket():
@@ -279,10 +305,121 @@ def get_click_position():
     else:
         return None
 
+
+
+
+
+class UpdateSourceModified:
+    def __init__(self, get_measured_pos=..., get_measured_yaw=...):
+        self.get_measured_pos = get_measured_pos
+        self.get_measured_yaw = get_measured_yaw
+        
+class TopCameraHandler:
+    # Handles actions of top camera
+    cam1_url = "rtsp://Admin:rtf123@192.168.2.250/251:554/1/1"
+    cam2_url = "rtsp://Admin:rtf123@192.168.2.251/251:554/1/1"
+    def __init__(self, cam=None, framework=0, fps_cam=30, fps_yolo=30, use_undist=True, fake_img_update_period=5,
+                 cam_uncontrolled_delay=0.250, cam_controlled_delay=0.100,
+                 controlled_delay=0.3, # Величина задержки, что у нас суммарно известно есть
+                 delay_std=0.025,      # Составляющая неизвестности в ней
+                 pos_std=0.05,
+                 yaw_std=10
+                 ):
+        ...
+        self.posiiton_data_buffer = [{'data':(0,0),'timestamp':0}]
+        self.yaw_data_buffer      = [{'data':(0,0),'timestamp':0}]
+        self.update_sink = UpdateSourceModified()
+        
+        self.controlled_delay = controlled_delay
+        
+        self.update_sink.get_measured_pos = self._get_measured_pos
+        self.update_sink.get_measured_yaw = self._get_measured_yaw
+        self.delayed_p = [0,0]
+        self.delayed_yaw = 0
+        self.delay_std = delay_std
+        
+        self.pos_std = pos_std
+        self.yaw_std = yaw_std
+        
+    def _get_measured_pos(self):
+        pos, ts = self.get_our_raw_position()
+        pos = pos+random.uniform(-self.pos_std,+self.pos_std)
+        rnd_delay = random.uniform(-self.delay_std, +self.delay_std)
+        time.sleep(self.controlled_delay+rnd_delay)
+        self.delayed_p = pos
+        return pos, ts+rnd_delay
+    
+    def _get_measured_yaw(self):
+        yaw, ts = self._get_our_raw_rotation()
+        yaw = yaw+random.uniform(-self.yaw_std,+self.yaw_std)
+        rnd_delay = random.uniform(-self.delay_std, +self.delay_std)
+        time.sleep(self.controlled_delay+rnd_delay)
+        self.delayed_yaw = yaw
+        return yaw, ts+rnd_delay
+        
+    def get_our_raw_position(self):
+        # Возвращает
+        # - позицию нашего робота в см на основании CV
+        # - timestamp с которого их получили
+        # global tank
+        # if tank is None:
+        #     return np.array((0,0)), 0
+        ts = time.time()
+        x, y, yaw = get_our_position_rotation()
+        return np.array((x, y)), ts
+
+    def _get_our_raw_rotation(self):
+        # Возвращает
+        # - курс нашего робота на основании CV в градусах
+        # - timestamp с которых их получили
+        # 0  градусов соответствует +Ox
+        # 90 градусов соответствует +Oy
+        ts = time.time()
+        x, y, yaw = get_our_position_rotation()
+        return yaw, ts
+
+
+
+
+
+
+global dote1_pos
+dote1_pos = (0,0)
+def draw_dote(p):
+    global dote1_pos
+    dote1_pos = p
+
+global dote2_pos
+dote2_pos = (0,0)
+def draw_dote2(p):
+    global dote2_pos
+    dote2_pos = p
+
+def _draw_dote(which=1):
+    global dote1_pos
+    global dote2_pos
+    global s
+    global screen
+    p = dote1_pos
+    color = (255, 0, 0)
+    if which==2:
+        p = dote2_pos
+        color = (0, 255, 0)
+    if screen is not None:
+        draw_line(screen, add(p, (-0.1,0)), add(p, (0.1,0)), off_x=field_offset_x, off_y=field_offset_y, s=s, color=color)
+        draw_line(screen, add(p, (0,-0.1)), add(p, (0,0.1)), off_x=field_offset_x, off_y=field_offset_y, s=s, color=color)
+
+global screen
+screen = None
+
+tank = None
+
+
 # Основной игровой цикл
 def main():
     global tank
     global IR_G, IR_R, IR_B, ULTRASONIC
+    global screen
     pygame.init()
     
     # Настройки окна игры
@@ -381,6 +518,10 @@ def main():
             border.draw(screen)
         
         tank.draw(screen)
+        
+        _draw_dote()
+        _draw_dote(2)
+        draw_line1_advanced()
 
         # Отображение данных с датчиков (для примера) 
         font=pygame.font.Font(None ,36)
