@@ -99,8 +99,8 @@ class Grabber:
     }
     pids = {
         1: PID(-0.1, 0, 0, setpoint=image_w//2, output_limits=(-40, 40)),
-        2: PID(-0.2, 0, 0, setpoint=image_w//2, output_limits=(-40, 40)),
-        3: PID(-0.2, 0, 0, setpoint=image_w//2, output_limits=(-40, 40)),
+        2: PID(-0.1, 0, 0, setpoint=image_w//2, output_limits=(-40, 40)),
+        3: PID(-0.1, 0, 0, setpoint=image_w//2, output_limits=(-40, 40)),
     }
     currentState = None
 
@@ -296,4 +296,4 @@ class Grabber:
 
 
 G = Grabber(ram)
-G.mainProcess('basket')
+G.mainProcess('cube')
