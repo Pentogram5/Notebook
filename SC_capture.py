@@ -296,4 +296,3 @@ class Grabber:
 
 
 G = Grabber(ram)
-G.mainProcess('cube')
