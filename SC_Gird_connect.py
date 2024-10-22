@@ -1,15 +1,20 @@
 from SC_Gird import *
 
 def calculate_vertex_objects(x, y, base_map): # Вычисление вершины в которой находится объект
+    min_dist_x = 10000
+    min_dist_y = 10000
+    node = 0
     for bound in base_map:
-        wight = bound[0]
-        length = bound[1]
         x_b = bound[2][0]
         y_b = bound[2][1]
         x_r = abs(x_b-x)
         y_r = abs(y_b - y)
-        if x_r <= length and y_r <= wight:
-            return bound[3]
+        if x_r <= min_dist_x and y_r <= min_dist_y:
+            min_dist_y = y_r
+            min_dist_x = x_r
+            node = bound[3]
+    
+    return node
 
 def build_center(x1, y1, x2, y2): # Вычисление центра координат объекта
 
@@ -26,8 +31,8 @@ def get_closest_PL(data, robot_coordinates, border): # Поиск минимал
     block_edges = block_border(border)
     g.remove_edge(block_edges)
     add_data(g, data)
-    block_edges = block_border(border)
     base_map = g.return_node_coordinate()
+    block_edges = block_border(border)
     g.remove_edge(block_edges)
     g.remove_edge_by_objects()
     for key, value in data.items():
@@ -36,21 +41,21 @@ def get_closest_PL(data, robot_coordinates, border): # Поиск минимал
                 try:
                     x, y = build_center(data[0], data[1], data[2], data[3])
                     vertex = calculate_vertex_objects(x, y, base_map)
-                    curr_path = get_current_path(g, base_map, vertex, robot_coordinates)
+                    curr_path = get_current_path(g,base_map, vertex, robot_coordinates)
                     paths.append(curr_path)
                 except Exception as e:
                     continue
     print("Pats: ", paths)
-    min_path_count = 100
+    min_path_count = 0
     min_path = 0
     for p in range(0, len(paths)):
-        if len(paths[p]) <= min_path_count:
+        if len(paths[p]) >= min_path_count:
             min_path_count = len(paths[p])
             min_path = paths[p]
     
     return min_path
 
-def get_to_base(data, robot_coordinates, base_coordinates, border): # Поиск минимального пути до базы
+def get_to_base(data, robot_coordinates, color, border): # Поиск минимального пути до базы
     size  = 5
     g = Graph(size)
     g.set_standart_map()
@@ -59,9 +64,20 @@ def get_to_base(data, robot_coordinates, base_coordinates, border): # Поиск
     block_edges = block_border(border)
     g.remove_edge(block_edges)
     g.remove_edge_by_objects()
+    DICT = {'green': 'base_green', 'red': 'base_red'}
+    for key, value in data.items():
+        if key == DICT[color]:
+            for index, data in enumerate(value):
+                try:
+                    x, y = build_center(data[0], data[1], data[2], data[3])
+                    vertex = calculate_vertex_objects(x, y, base_map)
+                    return get_current_path(g, base_map, vertex, robot_coordinates)
+                except Exception as e:
+                    continue
+    return []
     
 
-    return get_current_path(g, base_map, base_coordinates, robot_coordinates)
+    return 
 
 def add_data(g, data): # Добавление данных в граф 
     base_map = g.return_node_coordinate()

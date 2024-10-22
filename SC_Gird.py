@@ -101,6 +101,12 @@ class Graph:
 
         self.add_object_to_node(cube2)
 
+    def get_node_our_robot(self, x, y):
+        for n in self.objects:
+            for i in range(0, len(self.objects[n])):
+                if self.objects[n][i]['center'] == (x, y):
+                    return n
+
     def set_node_properties(self, node, length, width, center_x, center_y):
         """
         Устанавливает длину, ширину и координаты центра для узла.
@@ -231,7 +237,7 @@ class Graph:
                     center_x, center_y = properties['center']
                     center_path.append((center_x, center_y))
 
-        return center_path 
+        return center_path
     
     def return_node_coordinate(self):
         coordinates = []
@@ -242,7 +248,8 @@ class Graph:
             coordinates.append([length, width, (center_x, center_y), node])
         return coordinates
     
-    def set_standart_map(self):
+    def set_standart_map(self):  
+
         self.set_node_properties((0, 0), 45, 95, 47.5, 22.5)
         self.set_node_properties((1, 0), 70, 95, 47.5,80)
         self.set_node_properties((2, 0), 70, 95, 47.5,150)
@@ -281,6 +288,7 @@ class Graph:
                    ((2, 0), (2,1)),((2, 3), (2, 4)),]
         
         self.remove_edge(edges_to_remove)
+
         
 
     def visualize(self, path=None):
